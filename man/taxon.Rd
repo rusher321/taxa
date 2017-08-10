@@ -4,20 +4,22 @@
 \alias{taxon}
 \title{Taxon class}
 \usage{
-taxon(name, rank = NULL, id = NULL, authority = NULL)
+taxon(name, rank = NULL, id = NULL, authority = NULL, attributes = NULL)
 }
 \arguments{
-\item{name}{a TaxonName object \code{\link[=taxon_name]{taxon_name()}} or character string. if character
-passed in, we'll coerce to a TaxonName object internally, required}
+\item{name}{a TaxonName object \code{\link[=taxon_name]{taxon_name()}} or character string. if
+character passed in, we'll coerce to a TaxonName object internally, required}
 
-\item{rank}{a TaxonRank object \code{\link[=taxon_rank]{taxon_rank()}} or character string. if character
-passed in, we'll coerce to a TaxonRank object internally, required}
+\item{rank}{a TaxonRank object \code{\link[=taxon_rank]{taxon_rank()}} or character string. if
+character passed in, we'll coerce to a TaxonRank object internally, required}
 
-\item{id}{a TaxonId object \code{\link[=taxon_id]{taxon_id()}}, numeric/integer, or character string.
-if numeric/integer/character passed in, we'll coerce to a TaxonId object
-internally, required}
+\item{id}{a TaxonId object \code{\link[=taxon_id]{taxon_id()}}, numeric/integer, or character
+string. if numeric/integer/character passed in, we'll coerce to a
+TaxonId object internally, required}
 
 \item{authority}{(character) a character string, optional}
+
+\item{attributes}{(list) a named list of arbitrary attributes}
 }
 \value{
 An \code{R6Class} object of class \code{Taxon}
@@ -34,6 +36,34 @@ A class used to define a taxon.
 x$name
 x$rank
 x$id
+
+# optionally add taxon authority
+(x <- taxon(
+  name = taxon_name("Poa annua"),
+  rank = taxon_rank("species"),
+  id = taxon_id(93036),
+  authority = "L."
+))
+
+# add arbitrary attributes
+(x <- taxon(
+  name = taxon_name("Poa annua"),
+  rank = taxon_rank("species"),
+  id = taxon_id(93036),
+  attributes = list(
+    foo = "bar",
+    hello = "world"
+  )
+))
+
+# include a URL in your taxon_id() call - used in print method
+(x <- taxon(
+  name = taxon_name("Poa annua"),
+  rank = taxon_rank("species"),
+  id = taxon_id(93036, "https://www.ncbi.nlm.nih.gov/taxonomy/93036", database_list$ncbi)
+))
+## open the URL in default browser
+x$browse()
 }
 \seealso{
 Other classes: \code{\link{hierarchies}},

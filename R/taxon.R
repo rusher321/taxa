@@ -3,14 +3,15 @@
 #' A class used to define a taxon.
 #'
 #' @export
-#' @param name a TaxonName object [taxon_name()] or character string. if character
-#' passed in, we'll coerce to a TaxonName object internally, required
-#' @param rank a TaxonRank object [taxon_rank()] or character string. if character
-#' passed in, we'll coerce to a TaxonRank object internally, required
-#' @param id a TaxonId object [taxon_id()], numeric/integer, or character string.
-#' if numeric/integer/character passed in, we'll coerce to a TaxonId object
-#' internally, required
+#' @param name a TaxonName object [taxon_name()] or character string. if
+#' character passed in, we'll coerce to a TaxonName object internally, required
+#' @param rank a TaxonRank object [taxon_rank()] or character string. if
+#' character passed in, we'll coerce to a TaxonRank object internally, required
+#' @param id a TaxonId object [taxon_id()], numeric/integer, or character
+#' string. if numeric/integer/character passed in, we'll coerce to a
+#' TaxonId object internally, required
 #' @param authority (character) a character string, optional
+#' @param attributes (list) a named list of arbitrary attributes
 #'
 #' @return An `R6Class` object of class `Taxon`
 #' @family classes
@@ -24,12 +25,42 @@
 #' x$name
 #' x$rank
 #' x$id
-taxon <- function(name, rank = NULL, id = NULL, authority = NULL) {
+#'
+#' # optionally add taxon authority
+#' (x <- taxon(
+#'   name = taxon_name("Poa annua"),
+#'   rank = taxon_rank("species"),
+#'   id = taxon_id(93036),
+#'   authority = "L."
+#' ))
+#'
+#' # add arbitrary attributes
+#' (x <- taxon(
+#'   name = taxon_name("Poa annua"),
+#'   rank = taxon_rank("species"),
+#'   id = taxon_id(93036),
+#'   attributes = list(
+#'     foo = "bar",
+#'     hello = "world"
+#'   )
+#' ))
+#'
+#' # include a URL in your taxon_id() call - used in print method
+#' (x <- taxon(
+#'   name = taxon_name("Poa annua"),
+#'   rank = taxon_rank("species"),
+#'   id = taxon_id(93036, "https://www.ncbi.nlm.nih.gov/taxonomy/93036", database_list$ncbi)
+#' ))
+#' ## open the URL in default browser
+#' x$browse()
+taxon <- function(name, rank = NULL, id = NULL, authority = NULL,
+                  attributes = NULL) {
   Taxon$new(
     name = name,
     rank = rank,
     id = id,
-    authority = authority
+    authority = authority,
+    attributes = attributes
   )
 }
 
@@ -40,14 +71,22 @@ Taxon <- R6::R6Class(
     rank = NULL,
     id = NULL,
     authority = NULL,
+    attributes = list(),
 
     initialize = function(
-      name = NULL, rank = NULL, id = NULL, authority = NULL
+      name = NULL, rank = NULL, id = NULL, authority = NULL,
+      attributes = NULL
     ) {
       assert(name, c('TaxonName', 'character'))
       assert(rank, c('TaxonRank', 'character'))
       assert(id, c('TaxonId', 'character', 'numeric', 'integer'))
       assert(authority, 'character')
+      assert(attributes, 'list')
+      if (!is.null(attributes)) {
+        if (is.null(names(attributes))) {
+          stop("`attributes` must be a named list")
+        }
+      }
 
       # Convert characters to appropriate classes
       if (is.character(name)) {
@@ -64,6 +103,7 @@ Taxon <- R6::R6Class(
       self$rank <- rank
       self$id <- id
       self$authority <- authority
+      self$attributes <- attributes
     },
 
     print = function(indent = "") {
@@ -74,9 +114,21 @@ Taxon <- R6::R6Class(
                                 private$get_rank() %||% "none", "\n")))
       cat(paste0(indent, paste0("  id: ",
                                 private$get_id() %||% "none", "\n")))
+      cat(paste0(indent, paste0("  url: ",
+                                private$get_url() %||% "none", "\n")))
       cat(paste0(indent, paste0("  authority: ",
-                                private$authority %||% "none", "\n")))
+                                self$authority %||% "none", "\n")))
+      cat(paste0(indent, "  attributes:\n"))
+      if (!is.null(self$attributes) && length(self$attributes) > 0) {
+        for (i in seq_along(self$attributes)) {
+          cat(paste0(indent, paste0("   ", sprintf("%s: %s", names(self$attributes)[i], self$attributes[[i]]) %||% "none", "\n")))
+        }
+      }
       invisible(self)
+    },
+
+    browse = function() {
+      if (!is.null(self$id$url)) browseURL(self$id$url) else message("no taxon URL")
     }
   ),
 
@@ -106,6 +158,14 @@ Taxon <- R6::R6Class(
         output <- self$id
       }
       return(output)
+    },
+
+    get_url = function() {
+      if ("TaxonId" %in% class(self$id)) {
+        self$id$url
+      } else {
+        ""
+      }
     }
   )
 )

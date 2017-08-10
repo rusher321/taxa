@@ -4,10 +4,13 @@
 \alias{taxon_id}
 \title{Taxon ID class}
 \usage{
-taxon_id(id, database = NULL)
+taxon_id(id, url = NULL, database = NULL)
 }
 \arguments{
 \item{id}{(character/integer/numeric) a taxonomic id, required}
+
+\item{url}{(character) url/uri for the taxon, should be associated with the
+database given to the \code{database} parameter}
 
 \item{database}{(database) database class object, optional}
 }
@@ -25,6 +28,7 @@ x$database
 
 (x <- taxon_id(
   12345,
+  "https://www.ncbi.nlm.nih.gov/taxonomy/12345",
   database_list$ncbi
 ))
 x$id
