@@ -163,7 +163,7 @@ parse_tax_data <- function(tax_data, datasets = list(), class_cols = 1,
   } else if (is.data.frame(tax_data)) { # is a data.frame
     parsed_tax <- lapply(seq_len(nrow(tax_data)),
                          function(i) {
-                           class_source <- as.character(unlist(tax_data[i, class_cols]))
+                           class_source <- unlist(lapply(tax_data[i, class_cols], as.character))
                            unname(unlist(multi_sep_split(class_source,
                                                          fixed = !sep_is_regex,
                                                          split = class_sep)))
@@ -184,6 +184,9 @@ parse_tax_data <- function(tax_data, datasets = list(), class_cols = 1,
   } else {
     stop("Unknown format for first input. Cannot parse taxonomic information.")
   }
+  
+  # Remove white space
+  parsed_tax <- lapply(parsed_tax, trimws)
 
   # Extract out any taxon info
   if (is.null(class_sep)) { # Use mutliple matches of the class regex instead of sep
@@ -323,6 +326,11 @@ parse_tax_data <- function(tax_data, datasets = list(), class_cols = 1,
 #'   as a dataset, like those in `datasets`.
 #' @param use_database_ids (`TRUE`/`FALSE`) Whether or not to use downloaded
 #'   database taxon ids instead of arbitrary, automatically-generated taxon ids.
+#' @param ask  (`TRUE`/`FALSE`) Whether or not to promt the user for input.
+#'   Currently, this would only happen when looking up the taxonomy of a taxon
+#'   name with multiple matches. If `FALSE`, taxa with multiple hits are treated
+#'   as if they do not exist in the database. This might change in the future if
+#'   we can find an elegant way of handling this.
 #'
 #' @family parsers
 #'
@@ -373,7 +381,8 @@ parse_tax_data <- function(tax_data, datasets = list(), class_cols = 1,
 #' @export
 lookup_tax_data <- function(tax_data, type, column = 1, datasets = list(),
                             mappings = c(), database = "ncbi",
-                            include_tax_data = TRUE, use_database_ids = TRUE) {
+                            include_tax_data = TRUE, use_database_ids = TRUE,
+                            ask = TRUE) {
   # Make sure taxize is installed
   check_for_pkg("taxize")
 
@@ -397,10 +406,20 @@ lookup_tax_data <- function(tax_data, type, column = 1, datasets = list(),
     # Complain about failed queries
     failed_queries <- is.na(class_table)
     if (sum(failed_queries) > 0) {
-      warning(paste0('The following ', sum(failed_queries),
-                     ' taxon name could not be looked up:\n  ',
-                     limited_print(names(failed_queries[failed_queries]),
-                                   type = "silent")))
+      error_msg <- paste0('The following ', sum(failed_queries),
+                          ' taxon name could not be looked up:\n  ',
+                          limited_print(names(failed_queries[failed_queries]),
+                                        type = "silent"))
+      if (ask) {
+        error_msg <- paste0(error_msg, "\n",
+                            'This is probably means they dont exist in the database "', database, '".')
+      } else {
+        error_msg <- paste0(error_msg, "\n",
+                            'This is probably means they dont exist in the database "', database,
+                            '" or have multiple matches. ',
+                            'Use "ask = TRUE" to specify which is the correct match when multiple matches occur.')
+      }
+      warning(error_msg, call. = FALSE)
     }
 
     # Rename columns of result
@@ -451,7 +470,11 @@ lookup_tax_data <- function(tax_data, type, column = 1, datasets = list(),
 
   use_taxon_name <- function(names) {
     # Look up classifications
-    result <- map_unique(names, taxize::classification, ask = FALSE, rows = 1, db = database)
+    if (ask) {
+      result <- map_unique(names, taxize::classification, ask = TRUE, db = database)
+    } else {
+      result <- map_unique(names, taxize::classification, ask = FALSE, db = database)
+    }
 
     format_class_table(result)
   }
@@ -757,7 +780,7 @@ extract_tax_data <- function(tax_data, key, regex, class_key = "taxon_name",
   if (any(key %in% c("taxon_name", "taxon_id", "seq_id"))) {
     my_type <- key[key != "info"][1]
     output <- lookup_tax_data(tax_data = parsed_input, type = my_type,
-                              column = which(key == my_type) + 1,
+                              column = names(my_type),
                               database = database,
                               include_tax_data = include_tax_data)
 

@@ -476,6 +476,28 @@ NULL
 NULL
 
 
+#' Get number of supertaxa
+#'
+#' Get number of immediate supertaxa (i.e. not supertaxa of supertaxa, etc) for
+#' each taxon in an object of type [taxonomy()] or [taxmap()]. This should
+#' always be either 1 or 0.
+#' \preformatted{
+#' obj$n_supertaxa_1()
+#' n_supertaxa_1(obj)}
+#'
+#' @param obj ([taxonomy()] or [taxmap()])
+#'
+#' @return \code{numeric}
+#'
+#' @examples
+#' n_supertaxa_1(ex_taxmap)
+#'
+#' @family taxonomy data functions
+#'
+#' @name n_supertaxa_1
+NULL
+
+
 #' Get number of subtaxa
 #'
 #' Get number of subtaxa for each taxon in an object of type
@@ -650,10 +672,10 @@ NULL
 #' a changed version would be returned, like most R functions.
 #' \preformatted{
 #' filter_taxa(obj, ..., subtaxa = FALSE, supertaxa = FALSE,
-#'   drop_obs = FALSE, reassign_obs = TRUE, reassign_taxa = TRUE,
+#'   drop_obs = TRUE, reassign_obs = TRUE, reassign_taxa = TRUE,
 #'   invert = FALSE)
 #' obj$filter_taxa(..., subtaxa = FALSE, supertaxa = FALSE,
-#'   drop_obs = FALSE, reassign_obs = TRUE, reassign_taxa = TRUE,
+#'   drop_obs = TRUE, reassign_obs = TRUE, reassign_taxa = TRUE,
 #'   invert = FALSE)}
 #'
 #' @param obj An object of class [taxonomy()] or [taxmap()]
@@ -685,7 +707,7 @@ NULL
 #'   [taxmap()] objects. If `TRUE`, observations assigned to removed taxa will
 #'   be reassigned to the closest supertaxon that passed the filter. If there
 #'   are no supertaxa of such an observation that passed the filter, they will
-#'   be filtered out if `drop_obs` is `FALSE`. This option can be either simply
+#'   be filtered out if `drop_obs` is `TRUE`. This option can be either simply
 #'   `TRUE`/`FALSE`, meaning that all data sets will be treated the same, or a
 #'   logical vector can be supplied with names corresponding one or more data
 #'   sets in `obj$data`. For example, `c(abundance = TRUE, stats = FALSE)` would
@@ -1013,6 +1035,34 @@ NULL
 NULL
 
 
+#' Create a mapping without NSE
+#'
+#' Creates a named vector that maps the values of two variables associated with
+#' taxa in a [taxonomy()] or [taxmap()] object without using Non-Standard
+#' Evaluation (NSE). Both values must be named by taxon ids. This is the same as
+#' [map_data()] without NSE and can be useful in some odd cases where NSE fails
+#' to work as expected.
+#' \preformatted{
+#' obj$map_data(from, to)
+#' map_data(obj, from, to)}
+#'
+#' @param obj The [taxonomy()] or [taxmap()] object.
+#' @param from The value used to name the output. There will be one output value
+#'   for each value in `from`.
+#' @param to The value returned in the output.
+#'
+#' @return A vector of `to` values named by values in `from`.
+#'
+#' @family taxonomy data functions
+#'
+#' @examples
+#' x = c("d" = "looks like a cat", "h" = "big scary cats",
+#'       "i" = "smaller cats", "m" = "might eat you", "n" = "Meow! (Feed me!)")
+#' map_data_(ex_taxmap, from = ex_taxmap$taxon_names(), to = x)
+#'
+#' @name map_data_
+NULL
+
 
 #' Replace taxon ids
 #'
@@ -1031,4 +1081,19 @@ NULL
 #'
 #' replace_taxon_ids(ex_taxmap, seq_len(length(ex_taxmap$taxa)))
 #' }
+NULL
+
+
+#' Remove redundant parts of taxon names
+#'
+#' Remove the names of parent taxa in the begining of their children's names in a \code{taxonomy} or \code{taxmap} object.
+#' This is useful for removing genus names in species binomials.
+#' \preformatted{
+#' obj$remove_redundant_names()
+#' remove_redundant_names(obj)}
+#'
+#' @param obj A \code{taxonomy} or \code{taxmap} object
+#'
+#' @return A \code{taxonomy} or \code{taxmap} object
+#' @name remove_redundant_names
 NULL

@@ -7,12 +7,15 @@ taxa [current]
 * Fixed a bug that caused an error when using unnamed vectors ([issue #86](https://github.com/ropensci/taxa/issues/86))
 * Fixed a bug that prevents using sequence accession numbers ([issue #85](https://github.com/ropensci/taxa/issues/85))
 * Fixed bug in `lookup_tax_data` and `extract_tax_data` that caused an error when one of the queries failed too download.
+* Fixed bug that caused "data" argument of `obs_apply` to not work when passed as a varaible ([issue #97](https://github.com/ropensci/taxa/issues/97))
 
 ### Improvements
 
+* Added `map_data_` for mapping without using NSE.
 * Make default dataset for `n_obs` and `n_obs_1` and make them available for NSE ([issue #91](https://github.com/ropensci/taxa/issues/91)
 * `parse_tax_data`/`extract_tax_data` can now parse things like `phylum;Nitrosopumilales;order;Nitrosopumilaceae;family;` and split out the rank and taxon names by using multiple matches to the `class_regex` when `class_sep` is NULL. 
 * `extract_tax_data` now gives warnings if a regex does not match.
+* Added `n_supertaxa_1` function to get number of immediate supertaxa (always 1 or 0).
 
 ### Changes
 

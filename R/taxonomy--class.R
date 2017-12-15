@@ -514,6 +514,12 @@ Taxonomy <- R6::R6Class(
              length, numeric(1))
     },
 
+    n_supertaxa_1 = function() {
+      vapply(self$supertaxa(recursive = FALSE, include_input = FALSE,
+                            value = "taxon_indexes", na = FALSE),
+             length, numeric(1))
+    },
+
     n_subtaxa = function() {
       vapply(self$subtaxa(recursive = TRUE, include_input = FALSE,
                           value = "taxon_indexes"),
@@ -806,8 +812,11 @@ Taxonomy <- R6::R6Class(
       }
 
       # Map values using taxon ids
-      stats::setNames(to_data[match(names(from_data), names(to_data))],
-                      from_data)
+      self$map_data_(from = from_data, to = to_data)
+    },
+
+    map_data_ = function(from, to) {
+      stats::setNames(to[match(names(from), names(to))], from)
     },
 
     replace_taxon_ids = function(new_ids) {
@@ -850,6 +859,18 @@ Taxonomy <- R6::R6Class(
 
       # Return modified object
       return(self)
+    },
+
+    remove_redundant_names = function() {
+      new_names <- vapply(supertaxa(self, recursive = FALSE, include_input = TRUE),
+                          function(x) gsub(self$taxon_names()[x[1]],
+                                           pattern = paste0("^", self$taxon_names()[x[2]], "[_ ]+"),
+                                           replacement = ""),
+                          character(1))
+      lapply(seq_along(new_names), function(i) {
+        self$taxa[[i]]$name$name <- new_names[i]
+      })
+      return(self)
     }
 
     # pop = function(ranks = NULL, names = NULL, ids = NULL) {
@@ -872,9 +893,9 @@ Taxonomy <- R6::R6Class(
 
   private = list(
     nse_accessible_funcs = c("taxon_names", "taxon_ids", "taxon_indexes",
-                             "n_supertaxa", "n_subtaxa", "n_subtaxa_1",
-                             "taxon_ranks", "is_root", "is_stem", "is_branch",
-                             "is_leaf"),
+                             "n_supertaxa", "n_supertaxa_1", "n_subtaxa",
+                             "n_subtaxa_1", "taxon_ranks", "is_root", "is_stem",
+                             "is_branch", "is_leaf"),
 
     make_graph = function() {
       apply(self$edge_list, 1, paste0, collapse = "->")
@@ -896,8 +917,7 @@ Taxonomy <- R6::R6Class(
     # Each expression can resolve to taxon ids, edgelist indexes, or logical.
     parse_nse_taxon_subset = function(...) {
       # Non-standard argument evaluation
-      selection <- rlang::eval_tidy(rlang::quos(...),
-                                    data = self$data_used(...))
+      selection <- lapply(rlang::quos(...), rlang::eval_tidy, data = self$data_used(...))
 
       # Default to all taxa if no selection is provided
       if (all(vapply(selection, is.null, logical(1)))) {

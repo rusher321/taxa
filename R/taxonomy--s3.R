@@ -224,6 +224,22 @@ n_supertaxa.Taxonomy <- function(obj) {
 
 
 #' @export
+n_supertaxa_1 <- function(obj) {
+  UseMethod("n_supertaxa_1")
+}
+
+#' @export
+n_supertaxa_1.default <- function(obj) {
+  stop("Unsupported class: ", class(obj)[[1L]], call. = FALSE, domain = NA)
+}
+
+#' @export
+n_supertaxa_1.Taxonomy <- function(obj) {
+  obj$n_supertaxa_1()
+}
+
+
+#' @export
 n_subtaxa <- function(obj) {
   UseMethod("n_subtaxa")
 }
@@ -468,6 +484,22 @@ map_data.Taxonomy <- function(obj, ...) {
 
 
 #' @export
+map_data_ <- function(obj, ...) {
+  UseMethod("map_data_")
+}
+
+#' @export
+map_data_.default <- function(obj, ...) {
+  stop("Unsupported class: ", class(obj)[[1L]], call. = FALSE, domain = NA)
+}
+
+#' @export
+map_data_.Taxonomy <- function(obj, ...) {
+  obj$map_data_(...)
+}
+
+
+#' @export
 replace_taxon_ids <- function(obj, ...) {
   UseMethod("replace_taxon_ids")
 }
@@ -481,4 +513,21 @@ replace_taxon_ids.default <- function(obj, ...) {
 replace_taxon_ids.Taxonomy <- function(obj, ...) {
   obj <- obj$clone(deep = TRUE)
   obj$replace_taxon_ids(...)
+}
+
+
+#' @export
+remove_redundant_names <- function(obj, ...) {
+  UseMethod("remove_redundant_names")
+}
+
+#' @export
+remove_redundant_names.default <- function(obj, ...) {
+  stop("Unsupported class: ", class(obj)[[1L]], call. = FALSE, domain = NA)
+}
+
+#' @export
+remove_redundant_names.Taxonomy <- function(obj, ...) {
+  obj <- obj$clone(deep = TRUE)
+  obj$remove_redundant_names(...)
 }
