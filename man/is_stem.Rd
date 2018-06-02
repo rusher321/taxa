@@ -19,17 +19,22 @@ obj$is_stem()
 is_stem(obj)}
 }
 \examples{
+# Test which taxon IDs correspond to stems
 is_stem(ex_taxmap)
+
+# Filter out stems
+filter_taxa(ex_taxmap, ! is_stem)
 
 }
 \seealso{
 Other taxonomy data functions: \code{\link{classifications}},
   \code{\link{id_classifications}},
-  \code{\link{is_branch}}, \code{\link{is_leaf}},
-  \code{\link{is_root}}, \code{\link{map_data_}},
-  \code{\link{map_data}}, \code{\link{n_subtaxa_1}},
-  \code{\link{n_subtaxa}}, \code{\link{n_supertaxa_1}},
-  \code{\link{n_supertaxa}}, \code{\link{taxon_ids}},
-  \code{\link{taxon_indexes}}, \code{\link{taxon_names}},
-  \code{\link{taxon_ranks}}
+  \code{\link{is_branch}}, \code{\link{is_internode}},
+  \code{\link{is_leaf}}, \code{\link{is_root}},
+  \code{\link{map_data_}}, \code{\link{map_data}},
+  \code{\link{n_leaves_1}}, \code{\link{n_leaves}},
+  \code{\link{n_subtaxa_1}}, \code{\link{n_subtaxa}},
+  \code{\link{n_supertaxa_1}}, \code{\link{n_supertaxa}},
+  \code{\link{taxon_ids}}, \code{\link{taxon_indexes}},
+  \code{\link{taxon_names}}, \code{\link{taxon_ranks}}
 }

@@ -25,7 +25,15 @@ TaxonId object internally, required}
 An \code{R6Class} object of class \code{Taxon}
 }
 \description{
-A class used to define a taxon.
+A class used to define a single taxon. Most other classes in the taxa package
+include one or more objects of this class.
+}
+\details{
+Note that there is a special use case of this function - you can
+pass \code{NULL} as the first parameter to get an empty \code{taxon} object. It makes
+sense to retain the original behavior where nothing passed in to the first
+parameter leads to an error, and thus creating a \code{NULL} taxon is done very
+explicitly.
 }
 \examples{
 (x <- taxon(

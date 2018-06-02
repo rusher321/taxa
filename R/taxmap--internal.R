@@ -1,48 +1,19 @@
-#' Format taxon subset value
-#'
-#' Format an input to a `subset` option on functions like [supertaxa()].
-#' Converts logical and `taxon_ids` into indexes of `taxon_data`.
-#'
-#' @param taxon_ids All of the taxon ids from a `taxmap` object.
-#' @param index If a `character`, then it should be values of `taxon_ids`. If a
-#'   `numeric`, then it should be row indexes of `taxon_data`. If a `logical`,
-#'   then it should correspond to rows of `taxon_data`.
-#'
-#' @return (`integer`) row indexes of the edge list in a `taxmap` object named
-#'   by corresponding taxon ids
-#'
-#' @keywords internal
-format_taxon_subset <- function(taxon_ids, index) {
-  if (is.null(index)) {
-    output <- stats::setNames(seq_along(taxon_ids), taxon_ids)
-  } else {
-    if (is.numeric(index)) {
-      output <- index
-    } else if (is.character(index)) {
-      output <- match(index, taxon_ids)
-    } else if (is.logical(index)) {
-      output <- which(index)
-    } else {
-      stop("Invalid subset value.")
-    }
-    names(output) <- taxon_ids[output]
-  }
-  return(output)
-}
-
-
 #' Convert `data` input for Taxamp
 #'
-#' Make sure `data` is in the right format and complain if it is not.
-#' Then, add a `taxon_id` column to data with the same length as the input
+#' Make sure `data` is in the right format and complain if it is not. Then, add
+#' a `taxon_id` column to data with the same length as the input
 #'
+#' @param self The newly created [taxmap()] object
 #' @param data The `data` variable passed to the `Taxmap` constructor
-#' @param input_ids
+#' @param input_ids The taxon IDs for the inputs that made the taxonomy
+#' @param assume_equal If `TRUE`, and a data set length is the same as the
+#'   `input_ids` length, then assume that `input_ids` applies to the data set as
+#'   well.
 #'
 #' @return A `data` variable with the right format
 #'
 #' @keywords internal
-validate_taxmap_data <- function(data, input_ids) {
+init_taxmap_data <- function(self, data, input_ids, assume_equal = TRUE) {
 
   process_one <- function(x, name) {
     if (is.data.frame(x)) {
@@ -53,20 +24,59 @@ validate_taxmap_data <- function(data, input_ids) {
 
       # Add the `taxon_id` column if it is not already there
       if ("taxon_id" %in% colnames(x)) {
-        message(paste0('Using existing "taxon_id" column for table "',
-                       name, '"'))
-      } else if ("taxon_index" %in% colnames(x) && is.integer(x$taxon_index)) {
-        x$taxon_id <- input_ids[x$taxon_index]
-      } else if (nrow(x) == length(input_ids)) {
-        x$taxon_id <- input_ids
+        is_valid <- self$is_taxon_id(x$taxon_id)
+        if (all(is_valid)) {
+          message(paste0('Using existing "taxon_id" column for table "',
+                         name, '"'))
+        } else { # has a "taxon_id" column but invalid IDs
+          stop(call. = FALSE,
+               paste0('The table "', name,
+                      '" has a "taxon_id" column, but the values do not appear to be taxon IDs.',
+                      'The following ', sum(! is_valid), ' of ',
+                      length(is_valid), ' values are not valid indexes:\n',
+                      limited_print(x$taxon_id[! is_valid], type = "silent")))
+        }
+      } else if ("taxon_index" %in% colnames(x)) {
+        message(paste0('Using "taxon_index" column to assign taxon IDs for table "',
+                       name, '".'))
+        x <- dplyr::bind_cols(taxon_id = unname(input_ids[as.integer(x$taxon_index)]), x)
+      } else if (assume_equal && nrow(x) == length(input_ids)) {
+        message(paste0('Assuming that the elements of table "', name,
+                       '" are in the same order as taxon information.'))
+        x <- dplyr::bind_cols(taxon_id = unname(input_ids), x)
       } else {
-        message(paste('The table "', name,
-                      '" does not have a "taxon_index" column or a number of ',
-                      'rows equal to the number of inputs, so no "taxon_id"',
-                      ' can be assigned.'))
+        warning(call. = FALSE,
+                paste0('The table "', name,
+                       '" does not have a "taxon_index" column, "taxon_id" column, or a number of',
+                       'rows equal to the number of inputs, so no "taxon_id"',
+                       ' can be assigned.'))
       }
-    } else if (is.null(names(x)) && length(x) == length(input_ids)) {
-      names(x) <- input_ids
+    } else if (is.vector(x) || is.list(x)) {
+      # Add the `taxon_id` column if it is not already there
+      if (is.null(names(x))) { # data set is unnamed
+        if (assume_equal && length(x) == length(input_ids)) { # if data length is same as input assume they match up
+          names(x) <- input_ids
+          message(paste0('Assuming that the elements of list/vector "', name,
+                         '" are in the same order as taxon information.'))
+        } else { # No taxonomy information
+          warning(call. = FALSE,
+                  paste0('The list/vector "', name,
+                         '" is unnamed so has no taxon ID information.'))
+        }
+      } else { # data set has names
+        is_valid <- self$is_taxon_id(names(x))
+        if (all(is_valid)) { # All are valid taxon ids
+          message(paste0('Using existing names of list/vector "', name,
+                         '" as taxon IDs.'))
+        } else { # data set has names, but they are not valid IDs
+          warning(call. = FALSE,
+                  paste0('The list/vector "', name,
+                         '" is named, but the names do not appear to be taxon IDs.',
+                         'The following ', sum(! is_valid), ' of ',
+                         length(is_valid), ' names are not valid indexes:\n',
+                         limited_print(names(x)[! is_valid], type = "silent")))
+        }
+      }
     }
     return(x)
   }
@@ -100,62 +110,6 @@ validate_taxmap_funcs <- function(funcs) {
 }
 
 
-#' Print a table
-#'
-#' Used to print each item in the `taxmap` print method.
-#'
-#' @param data The item to be printed
-#' @param max_rows (`numeric` of length 1) The maximum number of rows in
-#'   tables to print.
-#' @param max_items (`numeric` of length 1) The maximum number of list
-#'   items to print.
-#' @param max_width (`numeric` of length 1) The maximum number of
-#'   characters to print.
-#' @param prefix (`numeric` of length 1) What to print in front of each
-#'   line.
-#'
-#' @examples
-#' taxa:::print_item(ex_taxmap$data$info)
-#' taxa:::print_item(1:100)
-#'
-#' @keywords internal
-print_item <- function(data, name = NULL, max_rows = 3, max_items = 3,
-                       max_width = getOption("width") - 10, prefix = "") {
-  prefixed_print <- function(x, prefix, ...) {
-    output <- paste0(prefix, utils::capture.output(print(x, ...)))
-    cat(paste0(paste0(output, collapse = "\n"), "\n"))
-  }
-  arrange_obs
-
-  if (is.data.frame(data)) {
-    loadNamespace("dplyr") # used for tibble print methods
-    if (length(name) > 0 && ! is.na(name)) {
-      cat(paste0(prefix, name, ":\n"))
-    }
-    if (dplyr::is.tbl(data)) {
-      prefixed_print(data, prefix = paste0(prefix, "  "), n = max_rows,
-                     width = max_width)
-    } else {
-      prefixed_print(data, prefix = paste0(prefix, "  "))
-    }
-  } else if (is.list(data)) {
-    if (length(data) < 1) {
-      prefixed_print(list(), prefix = prefix)
-    } else {
-      cat(paste0(prefix, name, ": a list with ", length(data),
-                 ifelse(length(data) == 1, " item", " items"), "\n"))
-    }
-  } else if (is.vector(data)) {
-    cat(paste0(prefix, name, ": "))
-    limited_print(data, max_chars = max_width, type = "cat")
-  } else {
-    prefixed_print(data, prefix = prefix)
-  }
-  invisible(data)
-}
-
-
-
 #' used to parse inputs to `drop_obs` and `reassign_obs`
 #'
 #' @keywords internal
@@ -168,12 +122,12 @@ parse_possibly_named_logical <- function(input, data, default) {
       output <- stats::setNames(input, names(data))
     } else {
       stop(paste("Invalid input for logical vector selecting which data",
-                  "sets to affect. Valid inputs include:\n",
-                  "1) a single unnamed logical (e.g. TRUE)\n",
-                  "2) one or more named logicals with names matching",
-                  "data sets in obj$data (e.g. c(data_1 = TRUE, data_2",
-                  "= FALSE)\n  3) an unamed logical vector of the same",
-                  "length as obj$data."))
+                 "sets to affect. Valid inputs include:\n",
+                 "1) a single unnamed logical (e.g. TRUE)\n",
+                 "2) one or more named logicals with names matching",
+                 "data sets in obj$data (e.g. c(data_1 = TRUE, data_2",
+                 "= FALSE)\n  3) an unamed logical vector of the same",
+                 "length as obj$data."))
     }
   } else {
     if (length(not_data_names <-
@@ -228,4 +182,69 @@ check_taxmap_data <- function(obj) {
   }
 
   return(invisible(NULL))
+}
+
+
+#' Convert a vector to database IDs
+#'
+#' This is a convenience function to convert to identifiers of various  data
+#' sources. It wraps the \code{as.*id} functions in \code{\link[taxize]{taxize}}
+#'
+#' @param ids The character or numeric vector of raw taxon IDs.
+#' @param database The database format to convert the IDs to. Either ncbi,
+#'   itis, eol, col, tropicos, gbif, nbn, worms, natserv, bold, or wiki
+#' @param ... Passed to \code{as.*id} function.
+#'
+#' @keywords internal
+as_id <- function(ids, database, ...) {
+  id_constructors <- list(ncbi = taxize::as.uid,
+                          itis = taxize::as.tsn,
+                          iucn = taxize::as.iucn,
+                          eol = taxize::as.eolid,
+                          col = taxize::as.colid,
+                          tropicos = taxize::as.tpsid,
+                          gbif = taxize::as.gbifid,
+                          nbn = taxize::as.nbnid,
+                          worms = taxize::as.wormsid,
+                          natserv = taxize::as.natservid,
+                          bold = taxize::as.boldid,
+                          wiki = taxize::as.wiki)
+
+  if (! database %in% names(id_constructors)) {
+    stop(call. = FALSE,
+         paste0('"', database,
+                '" is not a recognized database name. Must be one of the following:\n',
+                limited_print(names(id_constructors), type = "silent")))
+  }
+
+  id_constructors[[database]](ids, ...)
+}
+
+
+#' lappy with progress bars
+#'
+#' Immitates lapply with optional progress bars
+#'
+#' @param X The thing to iterate over
+#' @param FUN The function to apply to each element
+#' @param progress (logical of length 1) Whether or not to print a progress bar. Default is to only print a progress bar during interactive use.
+#' @param ... Passed to function
+#'
+#' @return list
+#' @keywords internal
+progress_lapply <- function(X, FUN, progress = interactive(), ...) {
+  if (progress) {
+    progress_bar <- utils::txtProgressBar(min = 0, max = length(X), style = 3)
+    one_iteration <- function(index) {
+      output <- FUN(X[[index]], ...)
+      utils::setTxtProgressBar(progress_bar, index)
+      return(output)
+    }
+    output <- lapply(seq_len(length(X)), one_iteration)
+    close(progress_bar)
+  } else {
+    output <- lapply(X, FUN, ...)
+  }
+
+  return(output)
 }

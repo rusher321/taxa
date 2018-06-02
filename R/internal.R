@@ -6,9 +6,12 @@
 #' @param chars (`character`) What to print.
 #' @param prefix (`character` of length 1) What to print before
 #'   `chars`, on the same line.
+#' @param sep What to put between consecutive values
+#' @param mid What is used to indicate omitted values
+#' @param trunc What is appended onto truncated values
 #' @param max_chars (`numeric` of length 1) The maximum number of
 #'   characters to print.
-#' @param type (`"error"`, `"warning"`, `"message"`, `"cat"`, `"print"`, `"silent"``)
+#' @param type (`"error"`, `"warning"`, `"message"`, `"cat"`, `"print"`, `"silent"`, `"plain"`)
 #'
 #' @return `NULL`
 #'
@@ -18,15 +21,10 @@
 #' taxa:::limited_print(1:10000, prefix = "stuff:")
 #'
 #' @keywords internal
-limited_print <- function(chars, prefix = "",
+limited_print <- function(chars, prefix = "", sep = ", ", mid = " ... ",
+                          trunc_char = "[truncated]",
                           max_chars = getOption("width") - nchar(prefix) - 5,
                           type = "message") {
-
-  if (length(chars) == 0) {
-    cat(prefix)
-    return(invisible(NULL))
-  }
-
 
   # https://stat.ethz.ch/pipermail/r-help/2006-March/101023.html
   interleave <- function(v1,v2) {
@@ -35,25 +33,56 @@ limited_print <- function(chars, prefix = "",
     c(v1,v2)[order(c(ord1,ord2))]
   }
 
+  truncate <- function(x, max_chars = 30) {
+    if (nchar(x) > max_chars) {
+      x <- paste0(substr(x, 0, max_chars - nchar(crayon::strip_style(trunc_char))), trunc_char)
+    }
+    return(x)
+  }
+
+  # Remove colsole fonts
+  raw_chars <- chars
+  chars <- crayon::strip_style(chars)
+
+  # Convert NA to "NA"
+  chars[is.na(chars)] <- "NA"
+
+  #
+  if (length(chars) == 0) {
+    output <- prefix
+    return(invisible(NULL))
+  }
+
+  #
   q = "'"
   interleaved <- interleave(chars[1:(length(chars) / 2)],
                             rev(chars[(length(chars) / 2 + 1):length(chars)]))
-  is_greater_than_max <- cumsum(nchar(interleaved) + 2) + 10 > max_chars
+  is_greater_than_max <- cumsum(nchar(interleaved) + nchar(crayon::strip_style(sep))) + 10 > max_chars
   if (all(! is_greater_than_max)) {
     max_printed <- length(chars)
   } else {
-    max_printed <- which.max(is_greater_than_max)
+    max_printed <- which.max(is_greater_than_max) - 1
   }
   if (max_printed < length(chars)) {
-    first_part <-  chars[1:as.integer(max_printed / 2 - 0.5)]
-    second_part <-
-      chars[as.integer(length(chars) - (max_printed / 2) + 1.5):length(chars)]
-    output <- paste0(paste0(collapse = ", ", first_part),
-                     " ... ",
-                     paste0(collapse = ", ", second_part),
-                     "\n")
+    if (max_printed < 2) {
+      first_part <- truncate(chars[1])
+      second_part <- truncate(chars[length(chars)])
+    } else {
+      first_part <-  raw_chars[1:ceiling(max_printed / 2)]
+      second_part <- raw_chars[(length(chars) - floor(max_printed / 2) + 1):length(chars)]
+    }
+    if (length(chars) > 1) {
+      output <- paste0(paste0(collapse = sep, first_part),
+                       mid,
+                       paste0(collapse = sep, second_part),
+                       "\n")
+    } else {
+      output <- paste0(paste0(collapse = sep, first_part),
+                       "\n")
+
+    }
   } else {
-    output <- paste0(paste0(collapse = ", ", chars), "\n")
+    output <- paste0(paste0(collapse = sep, raw_chars), "\n")
   }
   output <- paste(prefix, output, collapse = "")
 
@@ -67,6 +96,8 @@ limited_print <- function(chars, prefix = "",
     cat(output)
   } else if (type == "print") {
     print(output)
+  } else if (type == "plain") {
+    output <- crayon::strip_style(output)
   } else if (type != "silent") {
     stop("invalid type option")
   }
@@ -125,8 +156,7 @@ unique_mapping <- function(input) {
 #' Run a function on unique values of a iterable
 #'
 #' Runs a function on unique values of a list/vector and then reformats the
-#' output so there is a one-to-one relationship with the input. Basically
-#' imitates `lapply`.
+#' output so there is a one-to-one relationship with the input.
 #'
 #' @param input What to pass to \code{func}
 #' @param func (\code{function})

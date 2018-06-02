@@ -17,15 +17,15 @@ taxon IDs}
 \code{character}
 }
 \description{
-Get classifications of taxa in an object of type \code{\link[=taxonomy]{taxonomy()}} or \code{\link[=taxmap]{taxmap()}}
-composed of data assoicated with taxa. Each classification is constructed by
-concatenating the data of the given taxon and all of its supertaxa.
+Get character vector classifications of taxa in an object of type
+\code{\link[=taxonomy]{taxonomy()}} or \code{\link[=taxmap]{taxmap()}} composed of data associated with taxa. Each
+classification is constructed by concatenating the data of the given taxon
+and all of its supertaxa.
 \preformatted{
 obj$classifications(value = "taxon_names", sep = ";")
 classifications(obj, value = "taxon_names", sep = ";")}
 }
 \examples{
-
 # Defualt settings returns taxon names separated by ;
 classifications(ex_taxmap)
 
@@ -38,11 +38,13 @@ classifications(ex_taxmap, value = "taxon_ranks", sep = "||")
 }
 \seealso{
 Other taxonomy data functions: \code{\link{id_classifications}},
-  \code{\link{is_branch}}, \code{\link{is_leaf}},
-  \code{\link{is_root}}, \code{\link{is_stem}},
-  \code{\link{map_data_}}, \code{\link{map_data}},
-  \code{\link{n_subtaxa_1}}, \code{\link{n_subtaxa}},
-  \code{\link{n_supertaxa_1}}, \code{\link{n_supertaxa}},
-  \code{\link{taxon_ids}}, \code{\link{taxon_indexes}},
-  \code{\link{taxon_names}}, \code{\link{taxon_ranks}}
+  \code{\link{is_branch}}, \code{\link{is_internode}},
+  \code{\link{is_leaf}}, \code{\link{is_root}},
+  \code{\link{is_stem}}, \code{\link{map_data_}},
+  \code{\link{map_data}}, \code{\link{n_leaves_1}},
+  \code{\link{n_leaves}}, \code{\link{n_subtaxa_1}},
+  \code{\link{n_subtaxa}}, \code{\link{n_supertaxa_1}},
+  \code{\link{n_supertaxa}}, \code{\link{taxon_ids}},
+  \code{\link{taxon_indexes}}, \code{\link{taxon_names}},
+  \code{\link{taxon_ranks}}
 }

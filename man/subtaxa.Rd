@@ -7,8 +7,9 @@
 \item{obj}{The \code{\link[=taxonomy]{taxonomy()}} or \code{\link[=taxmap]{taxmap()}} object containing taxon
 information to be queried.}
 
-\item{subset}{(\code{character}) \code{taxon_ids} or taxon indexes for which supertaxa
-will be returned. Default: All taxa in \code{obj} will be used.}
+\item{subset}{Taxon IDs, TRUE/FALSE vector, or taxon indexes to find subtaxa for.
+Default: All taxa in \code{obj} will be used. Any variable name that appears in
+\code{\link[=all_names]{all_names()}} can be used as if it was a vector on its own.}
 
 \item{recursive}{(\code{logical} or \code{numeric}) If \code{FALSE}, only return the subtaxa
 one rank below the target taxa. If \code{TRUE}, return all the subtaxa of every
@@ -39,9 +40,9 @@ Return data for the subtaxa of each taxon in an \code{\link[=taxonomy]{taxonomy(
 object.
 \preformatted{
 obj$subtaxa(subset = NULL, recursive = TRUE,
-  simplify = FALSE, include_input = FALSE, value = NULL)
+  simplify = FALSE, include_input = FALSE, value = "taxon_indexes")
 subtaxa(obj, subset = NULL, recursive = TRUE,
-  simplify = FALSE, include_input = FALSE, value = NULL)}
+  simplify = FALSE, include_input = FALSE, value = "taxon_indexes")}
 }
 \examples{
 # return the indexes for subtaxa for each taxon
@@ -51,7 +52,7 @@ subtaxa(ex_taxmap)
 subtaxa(ex_taxmap, subset = 1:3)
 
 # Only return data for some taxa using taxon ids
-subtaxa(ex_taxmap, subset = c("3", "4"))
+subtaxa(ex_taxmap, subset = c("d", "e"))
 
 # Only return data for some taxa using logical tests
 subtaxa(ex_taxmap, subset = taxon_ranks == "genus")
@@ -66,7 +67,8 @@ subtaxa(ex_taxmap, recursive = 2)
 subtaxa(ex_taxmap, value = "taxon_names")
 }
 \seealso{
-Other taxonomy indexing functions: \code{\link{leaves}},
+Other taxonomy indexing functions: \code{\link{branches}},
+  \code{\link{internodes}}, \code{\link{leaves}},
   \code{\link{roots}}, \code{\link{stems}},
   \code{\link{supertaxa}}
 }

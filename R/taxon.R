@@ -1,6 +1,7 @@
 #' Taxon class
 #'
-#' A class used to define a taxon.
+#' A class used to define a single taxon. Most other classes in the taxa package
+#' include one or more objects of this class.
 #'
 #' @export
 #' @param name a TaxonName object [taxon_name()] or character string. if
@@ -12,6 +13,12 @@
 #' TaxonId object internally, required
 #' @param authority (character) a character string, optional
 #' @param attributes (list) a named list of arbitrary attributes
+#'
+#' @details Note that there is a special use case of this function - you can
+#' pass `NULL` as the first parameter to get an empty `taxon` object. It makes
+#' sense to retain the original behavior where nothing passed in to the first
+#' parameter leads to an error, and thus creating a `NULL` taxon is done very
+#' explicitly.
 #'
 #' @return An `R6Class` object of class `Taxon`
 #' @family classes
@@ -25,7 +32,7 @@
 #' x$name
 #' x$rank
 #' x$id
-#'
+#' 
 #' # optionally add taxon authority
 #' (x <- taxon(
 #'   name = taxon_name("Poa annua"),
@@ -109,9 +116,9 @@ Taxon <- R6::R6Class(
     print = function(indent = "") {
       cat(paste0(indent, "<Taxon>\n"))
       cat(paste0(indent, paste0("  name: ",
-                                private$get_name() %||% "none", "\n")))
+                                self$get_name() %||% "none", "\n")))
       cat(paste0(indent, paste0("  rank: ",
-                                private$get_rank() %||% "none", "\n")))
+                                self$get_rank() %||% "none", "\n")))
       cat(paste0(indent, paste0("  id: ",
                                 private$get_id() %||% "none", "\n")))
       cat(paste0(indent, paste0("  url: ",
@@ -129,10 +136,12 @@ Taxon <- R6::R6Class(
 
     browse = function() {
       if (!is.null(self$id$url)) browseURL(self$id$url) else message("no taxon URL")
-    }
-  ),
+    },
 
-  private = list(
+    is_empty = function(x) {
+      is.null(self$name) && is.null(self$rank) && is.null(self$id)
+    },
+
     get_name = function() {
       if ("TaxonName" %in% class(self$name)) {
         output <- self$name$name
@@ -167,5 +176,9 @@ Taxon <- R6::R6Class(
         ""
       }
     }
+
+  ),
+
+  private = list(
   )
 )

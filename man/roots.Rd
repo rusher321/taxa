@@ -7,8 +7,9 @@
 \item{obj}{The \code{\link[=taxonomy]{taxonomy()}} or \code{\link[=taxmap]{taxmap()}} object containing taxon
 information to be queried.}
 
-\item{subset}{(\code{character}) Taxon IDs for which root taxa will be
-returned. Default: All taxon in \code{obj} will be used.}
+\item{subset}{Taxon IDs, TRUE/FALSE vector, or taxon indexes to find roots for.
+Default: All taxa in \code{obj} will be used. Any variable name that appears in
+\code{\link[=all_names]{all_names()}} can be used as if it was a vector on its own.}
 
 \item{value}{What data to return. This is usually the name of column in a
 table in \code{obj$data}. Any result of \code{all_names(obj)} can be used, but it
@@ -22,8 +23,8 @@ usually only makes sense to data that corresponds to taxa 1:1, such as
 Return the root taxa for a \code{\link[=taxonomy]{taxonomy()}} or \code{\link[=taxmap]{taxmap()}} object. Can also be used to
 get the roots of a subset of taxa.
 \preformatted{
-obj$roots(subset = NULL, value = NULL)
-roots(obj, subset = NULL, value = NULL)}
+obj$roots(subset = NULL, value = "taxon_indexes")
+roots(obj, subset = NULL, value = "taxon_indexes")}
 }
 \examples{
 # Return indexes of root taxa
@@ -37,7 +38,8 @@ roots(ex_taxmap, value = "taxon_names")
 
 }
 \seealso{
-Other taxonomy indexing functions: \code{\link{leaves}},
+Other taxonomy indexing functions: \code{\link{branches}},
+  \code{\link{internodes}}, \code{\link{leaves}},
   \code{\link{stems}}, \code{\link{subtaxa}},
   \code{\link{supertaxa}}
 }

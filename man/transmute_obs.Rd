@@ -18,12 +18,17 @@ An object of type \code{\link[=taxmap]{taxmap()}}
 \description{
 Replace columns of tables in \code{obj$data} in \code{\link[=taxmap]{taxmap()}} objects. See
 \code{\link[dplyr:transmute]{dplyr::transmute()}} for the inspiration for this function and more
-information.
+information. Calling the function using the \code{obj$transmute_obs(...)} style
+edits "obj" in place, unlike most R functions. However, calling the function
+using the \code{transmute_obs(obj, ...)} imitates R's traditional copy-on-modify
+semantics, so "obj" would not be changed; instead a changed version would be
+returned, like most R functions.
 \preformatted{
 obj$transmute_obs(target, ...)
 transmute_obs(obj, target, ...)}
 }
 \examples{
+# Replace columns in a table with new columns
 transmute_obs(ex_taxmap, "info", new_col = paste0(name, "!!!"))
 
 }

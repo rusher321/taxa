@@ -1,4 +1,5 @@
 library(taxa)
+library(testthat)
 context("taxmap parsers")
 
 test_that("Taxmap can be intialized from complex data", {
@@ -6,9 +7,9 @@ test_that("Taxmap can be intialized from complex data", {
   # Basic parsing
   my_vector <- c("A;B;C;D", "A;E;F;G", "A;B;H;I")
   my_list_1 <- list("A;B;C;D", "A;E;F;G", c("A;B", "H;I"))
-  my_list_2 <- list(c("A", "B", "C", "D"),
-                    c("A", "E", "F", "G"),
-                    c("A", "B", "H", "I"))
+  my_list_2 <- list(c(Phylum = "A", Class = "B", Order = "C", Family = "D"),
+                    c(Phylum = "A", Class = "E", Order = "F", Family = "G"),
+                    c(Phylum = "A", Class = "B", Order = "H", Family = "I"))
   my_frame <- data.frame(tax = c("A;B;C", "A;E;F", "A;B;H"),
                          species = c("D", "G", "I"))
   my_frames <- list(data.frame(tax = c("A", "B", "C", "D")),
@@ -26,6 +27,11 @@ test_that("Taxmap can be intialized from complex data", {
   expect_equal(vector_result, list_1_result)
   expect_equal(vector_result, list_2_result)
   expect_equal(vector_result, frame_result)
+
+  # Incorperating rank information in lists of vectors
+  result <- parse_tax_data(my_list_2, include_tax_data = FALSE,
+                           named_by_rank = TRUE)
+  expect_true(all(c("Phylum", "Class", "Order", "Family") %in% result$taxon_ranks()))
 
   # Basic parsing with datasets
   test_obj <- parse_tax_data(my_vector, list(test = letters[1:3]),
@@ -69,8 +75,23 @@ test_that("Taxmap can be intialized from complex data", {
                 "K__Mammalia;P__Carnivora;C__Felidae;G__Panthera;S__tigris",
                 "K__Mammalia;P__Carnivora;C__Felidae;G__Ursus;S__americanus")
   result <- parse_tax_data(raw_data, class_sep = ";", class_regex = "^(.+)__(.+)$",
-                 class_key = c(my_rank = "info", tax_name = "taxon_name"),
+                 class_key = c(my_rank = "taxon_rank", tax_name = "taxon_name"),
                  include_match = FALSE)
+  expect_true(all(c("K", "P", "C", "G", "S") %in% result$taxon_ranks()))
+  expect_error(parse_tax_data(raw_data, class_sep = ";", class_regex = "^(.+)__(.+)$",
+                              class_key = c(my_rank = "taxon_rank", tax_name = "taxon_name"),
+                              include_match = FALSE, named_by_rank = TRUE))
+
+  # Check that class_key names can be ommited
+  result <- parse_tax_data(raw_data, class_sep = ";", class_regex = "^(.+)__(.+)$",
+                           class_key = c("taxon_rank", "taxon_name"))
+  expect_true(all(c("taxon_rank_match", "taxon_name_match") %in% colnames(result$data$class_data)))
+  result <- parse_tax_data(raw_data, class_sep = ";", class_regex = "^(.+)__(.+)(.+)(.+)$",
+                           class_key = c("taxon_rank", "taxon_name", "info", "info"))
+  expect_true("info_match_1" %in% colnames(result$data$class_data))
+  result <- parse_tax_data(raw_data, class_sep = ";", class_regex = "^(.+)__(.+)(.+)(.+)$",
+                           class_key = c("taxon_rank", "taxon_name", "info", x = "info"))
+  expect_true(all(c("info_match", "x") %in% colnames(result$data$class_data)))
 
   # Check for data names that are the same as function names
   expect_warning(parse_tax_data(raw_data, class_sep = ";",
@@ -79,6 +100,33 @@ test_that("Taxmap can be intialized from complex data", {
                                               tax_name = "taxon_name"),
                                 include_match = FALSE),
                  "same name as functions")
+
+  # Invalid regex error
+  expect_error(parse_tax_data(raw_data, class_sep = ";",
+                                class_regex = "^(.+)_invalid_(.+)$",
+                                class_key = c(rank = "info",
+                                              tax_name = "taxon_name"),
+                                include_match = FALSE),
+                 "could not be matched by the regex supplied")
+
+  # Expect an error if bad column name
+  expect_error(parse_tax_data(raw_data, class_cols = "Not a column"),
+               'No item')
+  expect_error(parse_tax_data(raw_data, class_cols = -1),
+               'Column index')
+  expect_error(parse_tax_data(1:3, class_cols = "Not a column"),
+               'No item named')
+  expect_error(parse_tax_data(1:3, class_cols = 10),
+               'out of bounds for inputs:')
+
+  # Invalid mapping options
+  expect_error(parse_tax_data(1:3, datasets = list(), mappings = 1),
+               'must have the same number of values')
+  expect_error(parse_tax_data(1:3, datasets = 1, mappings = 1),
+               'The mapping options must be named.')
+  expect_error(parse_tax_data(1:3, datasets = 1, mappings = c(sdaff = 2)),
+               'Invalid inputs to the `mappings` found')
+
 
 })
 
@@ -113,6 +161,10 @@ test_that("Taxmap can be intialized from queried data", {
                                              "{{index}}" = "{{index}}"),
                                 column = "species")
 
+  # Parsing with fuzzy taxon name matches
+  expect_equal(lookup_tax_data("poa annus", type = "fuzzy_name")$taxon_names(),
+               lookup_tax_data("Poa annua", type = "taxon_name")$taxon_names())
+
   # Parsing with taxon ids
   id_result = lookup_tax_data(raw_data,
                               type = "taxon_id",
@@ -145,6 +197,33 @@ test_that("Taxmap can be intialized from queried data", {
   # Expect an error if trying to use invalid database of sequence id
   expect_error(lookup_tax_data(1:3, type = "seq_id", database = "bold"),
                "not a valid database")
+
+  # Expect an error if bad column name
+  expect_error(lookup_tax_data(raw_data, column = "Not a column",
+                               type = "seq_id"),
+               'No column "Not a column" in input table')
+  expect_error(lookup_tax_data(raw_data, column = -1,
+                               type = "seq_id"),
+               'Column index "-1" out of bounds')
+  expect_error(lookup_tax_data(1:3, column = "Not a column", type = "seq_id"),
+               'No item named "Not a column" in the following inputs:')
+  expect_error(lookup_tax_data(1:3, column = 10, type = "seq_id"),
+               'out of bounds for inputs:')
+
+  # Failed downloads
+  raw_data <- data.frame(species = c("Panthera leo",
+                                     "not a taxon",
+                                     "Ursus americanus"),
+                         my_tax_id = c("9689", "not a taxon id 6", "9643"),
+                         my_seq = c("AB548412", "777777777777", "DQ334818"),
+                         species_id = c("A", "B", "C"))
+  expect_warning(result <- lookup_tax_data(raw_data, type = "taxon_name", column = "species"))
+  expect_warning(result <- lookup_tax_data(raw_data, type = "taxon_name", column = "species"), ask = FALSE)
+  expect_equal(result$data$query_data$taxon_id[2], "unknown")
+  expect_warning(result <- lookup_tax_data(raw_data, type = "taxon_id", column = "my_tax_id"))
+  expect_equal(result$data$query_data$taxon_id[2], "unknown")
+  expect_warning(result <- lookup_tax_data(raw_data, type = "seq_id", column = "my_seq"))
+  expect_equal(result$data$query_data$taxon_id[2], "unknown")
 
 })
 

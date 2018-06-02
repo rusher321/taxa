@@ -9,9 +9,9 @@ information to be queried.}
 
 \item{func}{(\code{function}) The function to apply.}
 
-\item{subset}{(\code{character}) \code{taxon_ids} or indexes of
-\code{taxon_data} for which supertaxa will be returned. Default: All taxa
-in \code{obj} will be used.}
+\item{subset}{Taxon IDs, TRUE/FALSE vector, or taxon indexes of taxa to use.
+Default: All taxa in \code{obj} will be used. Any variable name that appears in
+\code{\link[=all_names]{all_names()}} can be used as if it was a vector on its own.}
 
 \item{recursive}{(\code{logical} or \code{numeric}) If \code{FALSE}, only return the
 supertaxa one rank above the target taxa. If \code{TRUE}, return all the
@@ -39,14 +39,19 @@ Apply a function to the supertaxa for each taxon. This is similar
 to using \code{\link[=supertaxa]{supertaxa()}} with \code{\link[=lapply]{lapply()}} or \code{\link[=sapply]{sapply()}}.
 \preformatted{
 obj$supertaxa_apply(func, subset = NULL, recursive = TRUE,
-  simplify = FALSE, include_input = FALSE, value = NULL,
+  simplify = FALSE, include_input = FALSE, value = "taxon_indexes",
   na = FALSE, ...)
 supertaxa_apply(obj, func, subset = NULL, recursive = TRUE,
-  simplify = FALSE, include_input = FALSE, value = NULL,
+  simplify = FALSE, include_input = FALSE, value = "taxon_indexes",
   na = FALSE, ....)}
 }
 \examples{
+# Get number of supertaxa that each taxon is contained in
+supertaxa_apply(ex_taxmap, length)
+
 # Get classifications for each taxon
+# Note; this can be done with `classifications()` easier
 supertaxa_apply(ex_taxmap, paste, collapse = ";", include_input = TRUE,
                 value = "taxon_names")
+
 }

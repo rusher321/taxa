@@ -18,14 +18,20 @@ obj$is_branch()
 is_branch(obj)}
 }
 \examples{
+# Test which taxon IDs correspond to branches
 is_branch(ex_taxmap)
+
+# Filter out branches
+filter_taxa(ex_taxmap, ! is_branch)
 
 }
 \seealso{
 Other taxonomy data functions: \code{\link{classifications}},
-  \code{\link{id_classifications}}, \code{\link{is_leaf}},
+  \code{\link{id_classifications}},
+  \code{\link{is_internode}}, \code{\link{is_leaf}},
   \code{\link{is_root}}, \code{\link{is_stem}},
   \code{\link{map_data_}}, \code{\link{map_data}},
+  \code{\link{n_leaves_1}}, \code{\link{n_leaves}},
   \code{\link{n_subtaxa_1}}, \code{\link{n_subtaxa}},
   \code{\link{n_supertaxa_1}}, \code{\link{n_supertaxa}},
   \code{\link{taxon_ids}}, \code{\link{taxon_indexes}},

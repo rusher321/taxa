@@ -9,14 +9,14 @@ information to be queried.}
 
 \item{func}{(\code{function}) The function to apply.}
 
-\item{subset}{(\code{character}) \code{taxon_ids} or indexes of
-\code{taxon_data} for which supertaxa will be returned. Default: All taxa
-in \code{obj} will be used.}
+\item{subset}{Taxon IDs, TRUE/FALSE vector, or taxon indexes to use.
+Default: All taxa in \code{obj} will be used. Any variable name that appears in
+\code{\link[=all_names]{all_names()}} can be used as if it was a vector on its own.}
 
 \item{recursive}{(\code{logical} or \code{numeric}) If \code{FALSE}, only return the
-supertaxa one rank above the target taxa. If \code{TRUE}, return all the
-supertaxa of every supertaxa, etc. Positive numbers indicate the number of
-recursions (i.e. number of ranks above the target taxon to return). \code{1} is
+subtaxa one rank below the target taxa. If \code{TRUE}, return all the
+subtaxa of every subtaxa, etc. Positive numbers indicate the number of
+recursions (i.e. number of ranks below the target taxon to return). \code{1} is
 equivalent to \code{FALSE}. Negative numbers are equivalent to \code{TRUE}.}
 
 \item{simplify}{(\code{logical}) If \code{TRUE}, then combine all the results into a
@@ -36,11 +36,15 @@ Apply a function to the subtaxa for each taxon. This is similar
 to using \code{\link[=subtaxa]{subtaxa()}} with \code{\link[=lapply]{lapply()}} or \code{\link[=sapply]{sapply()}}.
 \preformatted{
 obj$subtaxa_apply(func, subset = NULL, recursive = TRUE,
-  simplify = FALSE, include_input = FALSE, value = NULL, ...)
+  simplify = FALSE, include_input = FALSE, value = "taxon_indexes", ...)
 subtaxa_apply(obj, func, subset = NULL, recursive = TRUE,
-  simplify = FALSE, include_input = FALSE, value = NULL, ...)}
+  simplify = FALSE, include_input = FALSE, value = "taxon_indexes", ...)}
 }
 \examples{
 # Count number of subtaxa in each taxon
 subtaxa_apply(ex_taxmap, length)
+
+# Paste all the subtaxon names for each taxon
+subtaxa_apply(ex_taxmap, value = "taxon_names",
+              recursive = FALSE, paste0, collapse = ", ")
 }

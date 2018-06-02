@@ -7,7 +7,7 @@
 parse_tax_data(tax_data, datasets = list(), class_cols = 1,
   class_sep = ";", sep_is_regex = FALSE, class_key = "taxon_name",
   class_regex = "(.*)", include_match = TRUE, mappings = c(),
-  include_tax_data = TRUE)
+  include_tax_data = TRUE, named_by_rank = FALSE)
 }
 \arguments{
 \item{tax_data}{A table, list, or vector that contains the names of taxa that
@@ -56,6 +56,8 @@ multiple times. Each term must be one of those described below:
 \itemize{
 \item \code{taxon_name}: The name of a taxon. Not necessarily unique, but are
 interpretable by a particular \code{database}. Requires an internet connection.
+\item \code{taxon_rank}: The rank of the taxon. This will be used to add rank info
+into the output object that can be accessed by \code{out$taxon_ranks()}.
 \item \code{info}: Arbitrary taxon info you want included in the output. Can be used
 more than once.
 }}
@@ -90,13 +92,74 @@ will be converted to vectors using \code{\link[=unlist]{unlist()}}.
 
 \item{include_tax_data}{(\code{TRUE}/\code{FALSE}) Whether or not to include \code{tax_data}
 as a dataset, like those in \code{datasets}.}
+
+\item{named_by_rank}{(\code{TRUE}/\code{FALSE}) If  \code{TRUE} and the input is a table
+with columns named by ranks or a list of vectors with each vector named by
+ranks, include that rank info in the output object, so it can be accessed
+by \code{out$taxon_ranks()}. Cannot be used with the \code{sep}, \code{class_regex}, or
+\code{class_key} options.}
 }
 \description{
-Parses taxonomic information and associated data and stores it in a
-\code{\link[taxa:taxmap]{taxa::taxmap()}} object. \href{https://en.wikipedia.org/wiki/Taxonomy_(biology)#Classifying_organisms}{Taxonomic classifications}
-must be present somewhere in the first input.
+Reads taxonomic information and associated data in tables, lists, and vectors
+and stores it in a \code{\link[taxa:taxmap]{taxa::taxmap()}} object. \href{https://en.wikipedia.org/wiki/Taxonomy_(biology)#Classifying_organisms}{Taxonomic classifications}
+must be present.
 }
 \examples{
+ # Read a vector of classifications
+ my_taxa <- c("Mammalia;Carnivora;Felidae",
+              "Mammalia;Carnivora;Felidae",
+              "Mammalia;Carnivora;Ursidae")
+ parse_tax_data(my_taxa, class_sep = ";")
+
+ # Read a list of classifications
+ my_taxa <- list("Mammalia;Carnivora;Felidae",
+                "Mammalia;Carnivora;Felidae",
+                "Mammalia;Carnivora;Ursidae")
+ parse_tax_data(my_taxa, class_sep = ";")
+
+ # Read classifications in a table in a single column
+ species_data <- data.frame(tax = c("Mammalia;Carnivora;Felidae",
+                                    "Mammalia;Carnivora;Felidae",
+                                    "Mammalia;Carnivora;Ursidae"),
+                           species_id = c("A", "B", "C"))
+ parse_tax_data(species_data, class_sep = ";", class_cols = "tax")
+
+ # Read classifications in a table in multiple columns
+ species_data <- data.frame(lineage = c("Mammalia;Carnivora;Felidae",
+                                        "Mammalia;Carnivora;Felidae",
+                                        "Mammalia;Carnivora;Ursidae"),
+                            species = c("Panthera leo",
+                                        "Panthera tigris",
+                                        "Ursus americanus"),
+                            species_id = c("A", "B", "C"))
+ parse_tax_data(species_data, class_sep = c(" ", ";"),
+                class_cols = c("lineage", "species"))
+
+ # Read classification tables with one column per rank
+ species_data <- data.frame(class = c("Mammalia", "Mammalia", "Mammalia"),
+                            order = c("Carnivora", "Carnivora", "Carnivora"),
+                            family = c("Felidae", "Felidae", "Ursidae"),
+                            genus = c("Panthera", "Panthera", "Ursus"),
+                            species = c("leo", "tigris", "americanus"),
+                            species_id = c("A", "B", "C"))
+  parse_tax_data(species_data, class_cols = 1:5)
+  parse_tax_data(species_data, class_cols = 1:5,
+                 named_by_rank = TRUE) # makes `taxon_ranks()` work
+
+ # Classifications with extra information
+ my_taxa <- c("Mammalia_class_1;Carnivora_order_2;Felidae_genus_3",
+              "Mammalia_class_1;Carnivora_order_2;Felidae_genus_3",
+              "Mammalia_class_1;Carnivora_order_2;Ursidae_genus_3")
+ parse_tax_data(my_taxa, class_sep = ";",
+                class_regex = "(.+)_(.+)_([0-9]+)",
+                class_key = c(my_name = "taxon_name",
+                              a_rank = "taxon_rank",
+                              some_num = "info"))
+
+
+  # --- Parsing multiple datasets at once (advanced) ---
+  # The rest is one example for how to classify multiple datasets at once.
+
   # Make example data with taxonomic classifications
   species_data <- data.frame(tax = c("Mammalia;Carnivora;Felidae",
                                      "Mammalia;Carnivora;Felidae",

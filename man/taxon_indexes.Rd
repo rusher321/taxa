@@ -14,17 +14,22 @@ obj$taxon_indexes()
 taxon_indexes(obj)}
 }
 \examples{
+# Return the indexes for each taxon
 taxon_indexes(ex_taxmap)
+
+# Use in another function (stupid example; 1:5 would work too)
+filter_taxa(ex_taxmap, taxon_indexes < 5)
 
 }
 \seealso{
 Other taxonomy data functions: \code{\link{classifications}},
   \code{\link{id_classifications}},
-  \code{\link{is_branch}}, \code{\link{is_leaf}},
-  \code{\link{is_root}}, \code{\link{is_stem}},
-  \code{\link{map_data_}}, \code{\link{map_data}},
-  \code{\link{n_subtaxa_1}}, \code{\link{n_subtaxa}},
-  \code{\link{n_supertaxa_1}}, \code{\link{n_supertaxa}},
-  \code{\link{taxon_ids}}, \code{\link{taxon_names}},
-  \code{\link{taxon_ranks}}
+  \code{\link{is_branch}}, \code{\link{is_internode}},
+  \code{\link{is_leaf}}, \code{\link{is_root}},
+  \code{\link{is_stem}}, \code{\link{map_data_}},
+  \code{\link{map_data}}, \code{\link{n_leaves_1}},
+  \code{\link{n_leaves}}, \code{\link{n_subtaxa_1}},
+  \code{\link{n_subtaxa}}, \code{\link{n_supertaxa_1}},
+  \code{\link{n_supertaxa}}, \code{\link{taxon_ids}},
+  \code{\link{taxon_names}}, \code{\link{taxon_ranks}}
 }
