@@ -55,7 +55,7 @@ prefixed_print <- function(x, prefix, ...) {
 #' @param header_index The row index that contains the table column names
 #' @param row_indexes The indexes of the rows to be formatted.
 highlight_taxon_ids <- function(table_text, header_index, row_indexes) {
-  tax_id_bounds <- stringr::str_locate(table_text[header_index], "taxon_id[[:space:]]+")[1,]
+  tax_id_bounds <- stringr::str_locate(table_text[header_index], "taxon_id[[:space:]]*")[1,]
   tax_id_part <- substr(table_text[row_indexes],
                         start = tax_id_bounds[1], stop = tax_id_bounds[2])
   tax_id_part <- sub(tax_id_part,
@@ -105,7 +105,8 @@ print__tbl_df <- function(obj, data, name, prefix, max_width, max_rows) {
 
   # Capture tibble print output
   output <- paste0(prefix, utils::capture.output(print(data, n = max_rows,
-                                                       width = max_width - nchar(prefix))))
+                                                       width = max_width - nchar(prefix),
+                                                       n_extra = 10)))
   # Remove any existing fonts
   output <- crayon::strip_style(output)
 
@@ -114,9 +115,11 @@ print__tbl_df <- function(obj, data, name, prefix, max_width, max_rows) {
 
   # Highlight taxon IDs if they exist
   if (! is.null(obj$get_data_taxon_ids(name))) {
-    output <- highlight_taxon_ids(output,
-                                  header_index = 2,
-                                  row_indexes = 4:(3 + min(c(max_rows, nrow(data)))))
+    if (nrow(data) > 0) {
+      output <- highlight_taxon_ids(output,
+                                    header_index = 2,
+                                    row_indexes = 4:(3 + min(c(max_rows, nrow(data)))))
+    }
     output[2] <- sub(output[2], pattern = "(^|\\W)taxon_id($|\\W)", replacement = tid_font("\\1taxon_id\\2"))
   } else {
     output[2] <- sub(output[2], pattern = "(^|\\W)taxon_id($|\\W)", replacement = error_font("\\1taxon_id\\2"))

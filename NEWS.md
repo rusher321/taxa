@@ -1,17 +1,43 @@
-Current
-=======
+taxa 0.3.2
+==========
+
+### Bug fixes
+
+* Parsers now correclty handle zero-length inputs ([issue #185](https://github.com/ropensci/taxa/issues/185)).
+* `taxonomy_table` option `add_id_col` now works ([issue #191](https://github.com/ropensci/taxa/issues/191)).
+
+### Improvements
+
+* The `parse_tax_data` option `class_col` now accepts negative column indexes, meaning "all other columns".
+
+taxa 0.3.1
+==========
 
 ### New features
 
 * Added the `taxonomy_table` function that converts the information in a `taxmap` or `taxonomy` object into a table with taxa as rows and ranks as columns.
 * Added the `print_tree` function that prints text-based trees of `taxmap` or `taxonomy` objects ([issue #173](https://github.com/ropensci/taxa/issues/173)).
+* Added `get_dataset` function to get a single data set from `taxmap` objects. Useful for piping with `%>%`.
+* `filter_taxa` and `filter_obs` can now subset anything that has names, length, and can be subset, not just tables, lists, and vectors. For example, `DNAbin` objects from the `ape` package can now be used in `taxmap` objects ([issue #178](https://github.com/ropensci/taxa/issues/178)).
+
+### Improvements
+
+* Parsers are somewhat faster and use less RAM ([issue #177](https://github.com/ropensci/taxa/issues/177)).
+* `taxmap` and `taxonomy` parsers now treat taxa with the same name and same place in the taxonomy, but different ranks, database IDs, or authorities, as different taxa.
+* `filter_obs` can now filter multiple datasets at once if they are the same length ([issue #179](https://github.com/ropensci/taxa/issues/179)).
+* `select_obs` and `arrange_obs` can now work on multiple datasets at once.
 
 ### Bug fixes
 
 * Made the `"taxon_rank"` value for the `class_key` options work with `extract_tax_data`. 
+* Fixed bug in `taxmap` print method when printing tables with only a taxon ID column ([issue #181](https://github.com/ropensci/taxa/issues/181)).
+
+### Changes
+
+* Option `target` in many functions renamed to `data` to make it more intuitive. 
 
 taxa 0.2.1
-=======
+==========
 
 ### Improvements
 

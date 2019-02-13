@@ -1,82 +1,123 @@
+#' Convert a table with an edge list to taxmap
+#'
+#' Converts a table containing an edge list into a [taxa::taxmap()] object.
+#' An "edge list" is two columns in a table, where each row defines a taxon-supertaxon relationship.
+#' The contents of the edge list will be used as taxon IDs.
+#' The whole table will be included as a data set in the output object.
+#'
+#' @param input A table containing an edge list encoded by two columns.
+#' @param taxon_id The name/index of the column containing the taxon IDs.
+#' @param supertaxon_id The name/index of the column containing the taxon IDs for the supertaxon of the IDs in `taxon_col`.
+#' @param taxon_name xxx
+#' @param taxon_rank xxx
+#'
+#' @family parsers
+#'
+#' @export
+parse_edge_list <- function(input, taxon_id, supertaxon_id, taxon_name, taxon_rank = NULL) {
+
+  # Create empty taxmap object
+  output <- taxmap()
+
+  # Make taxon ID characters
+  input[taxon_id] <- as.character(input[[taxon_id]])
+  input[supertaxon_id] <- as.character(input[[supertaxon_id]])
+
+  # Add edge list
+  output$edge_list <- data.frame(from = input[[supertaxon_id]],
+                                 to = input[[taxon_id]],
+                                 stringsAsFactors = FALSE)
+
+  # Add taxa
+  output$taxa <- lapply(seq_len(nrow(input)), function(i) {
+    my_name <- input[[taxon_name]][i]
+    if (is.null(taxon_rank)) {
+      my_rank <- NULL
+    } else {
+      my_rank <- input[[taxon_rank]][i]
+    }
+    my_id <- input[[taxon_id]][i]
+    taxon(name = my_name, rank = my_rank, id = my_id)
+  })
+  names(output$taxa) <- input[[taxon_id]]
+
+  # Add data
+  input <- dplyr::mutate(input, taxon_id = taxon_ids(output))
+  input <- dplyr::select(input, taxon_id, everything())
+  output$data <- list(input = input)
+
+  return(output)
+}
+
+
 #' Convert one or more data sets to taxmap
 #'
-#' Reads taxonomic information and associated data in tables, lists, and vectors
-#' and stores it in a [taxa::taxmap()] object. [Taxonomic classifications](https://en.wikipedia.org/wiki/Taxonomy_(biology)#Classifying_organisms)
-#' must be present.
+#' Reads taxonomic information and associated data in tables, lists, and vectors and stores it in a
+#' [taxa::taxmap()] object. [Taxonomic
+#' classifications](https://en.wikipedia.org/wiki/Taxonomy_(biology)#Classifying_organisms) must be
+#' present.
 #'
-#' @param tax_data A table, list, or vector that contains the names of taxa that
-#'   represent [taxonomic classifications](https://en.wikipedia.org/wiki/Taxonomy_(biology)#Classifying_organisms).
-#'    Accepted representations of classifications include:
-#'   * A list/vector or table with column(s) of taxon names: Something like
-#'   `"Animalia;Chordata;Mammalia;Primates;Hominidae;Homo"`. What separator(s)
-#'   is used (";" in this example) can be changed with the `class_sep` option.
-#'   For tables, the classification can be spread over multiple columns and the
-#'   separator(s) will be applied to each column, although each column could
-#'   just be single taxon names with no separator. Use the `class_cols` option
-#'   to specify which columns have taxon names.
-#'   * A list in which each entry is a classifications. For example,
-#'   `list(c("Animalia", "Chordata", "Mammalia", "Primates", "Hominidae",
-#'   "Homo"), ...)`.
-#'   * A list of data.frames where each represents a classification with one
-#'   taxon per row. The column that contains taxon names is specified using the
-#'   `class_cols` option. In this instance, it only makes sense to specify a
-#'   single column.
-#' @param datasets Additional lists/vectors/tables that should be included in
-#'   the resulting `taxmap` object. The `mappings` option is use to specify how
-#'   these data sets relate to the `tax_data` and, by inference, what taxa apply
-#'   to each item.
-#' @param class_cols (`character` or `integer`) The names or indexes of columns
-#'   that contain classifications if the first input is a table. If multiple
-#'   columns are specified, they will be combined in the order given.
-#' @param class_sep (`character`) One or more separators that delineate taxon
-#'   names in a classification. For example, if one column had `"Homo sapiens"`
-#'   and another had `"Animalia;Chordata;Mammalia;Primates;Hominidae"`, then
-#'   `class_sep = c(" ", ";")`. All separators are applied to each column so
-#'   order does not matter.
-#' @param sep_is_regex (`TRUE`/`FALSE`) Whether or not `class_sep` should be
-#'   used as a [regular expression](https://en.wikipedia.org/wiki/Regular_expression).
-#' @param class_key (`character` of length 1) The identity of the capturing
-#'   groups defined using `class_regex`. The length of `class_key` must be equal
-#'   to the number of capturing groups specified in `class_regex`. Any names
-#'   added to the terms will be used as column names in the output. At least
-#'   one `"taxon_name"` must be specified. Only `"info"` can be used
-#'   multiple times. Each term must be one of those described below:
-#'   * `taxon_name`: The name of a taxon. Not necessarily unique, but are
-#'   interpretable by a particular `database`. Requires an internet connection.
-#'   * `taxon_rank`: The rank of the taxon. This will be used to add rank info
-#'   into the output object that can be accessed by `out$taxon_ranks()`.
-#'   * `info`: Arbitrary taxon info you want included in the output. Can be used
-#'   more than once.
-#' @param class_regex (`character` of length 1)
-#'   A regular expression with capturing groups indicating the locations of data
-#'   for each taxon in the `class` term in the `key` argument. The identity of
-#'   the information must be specified using the `class_key` argument. The
-#'   `class_sep` option can be used to split the classification into data for
-#'   each taxon before matching. If `class_sep` is `NULL`, each match of
-#'   `class_regex` defines a taxon in the classification.
-#' @param include_match (`logical` of length 1) If `TRUE`, include the part of
-#'   the input matched by `class_regex` in the output object.
-#' @param mappings (named `character`) This defines how the taxonomic
-#'   information in `tax_data` applies to data set in `datasets`. This option
-#'   should have the same number of inputs as `datasets`, with values
-#'   corresponding to each data set. The names of the character vector specify
-#'   what information in `tax_data` is shared with info in each `dataset`, which
-#'   is specified by the corresponding values of the character vector. If there
-#'   are no shared variables, you can add `NA` as a placeholder, but you could
-#'   just leave that data out since it is not benefiting from being in the
-#'   taxmap object. The names/values can be one of the following:
-#'   * For tables, the names of columns can be used.
-#'   * `"{{index}}"` : This means to use the index of rows/items
-#'   * `"{{name}}"`  : This means to use row/item names.
-#'   * `"{{value}}"` : This means to use the values in vectors or lists. Lists
-#'   will be converted to vectors using [unlist()].
-#' @param include_tax_data (`TRUE`/`FALSE`) Whether or not to include `tax_data`
-#'   as a dataset, like those in `datasets`.
-#' @param named_by_rank (`TRUE`/`FALSE`) If  `TRUE` and the input is a table
-#'   with columns named by ranks or a list of vectors with each vector named by
-#'   ranks, include that rank info in the output object, so it can be accessed
-#'   by `out$taxon_ranks()`. Cannot be used with the `sep`, `class_regex`, or
-#'   `class_key` options.
+#' @param tax_data A table, list, or vector that contains the names of taxa that represent
+#'   [taxonomic
+#'   classifications](https://en.wikipedia.org/wiki/Taxonomy_(biology)#Classifying_organisms).
+#'   Accepted representations of classifications include: * A list/vector or table with column(s) of
+#'   taxon names: Something like `"Animalia;Chordata;Mammalia;Primates;Hominidae;Homo"`. What
+#'   separator(s) is used (";" in this example) can be changed with the `class_sep` option. For
+#'   tables, the classification can be spread over multiple columns and the separator(s) will be
+#'   applied to each column, although each column could just be single taxon names with no
+#'   separator. Use the `class_cols` option to specify which columns have taxon names. * A list in
+#'   which each entry is a classifications. For example, `list(c("Animalia", "Chordata", "Mammalia",
+#'   "Primates", "Hominidae", "Homo"), ...)`. * A list of data.frames where each represents a
+#'   classification with one taxon per row. The column that contains taxon names is specified using
+#'   the `class_cols` option. In this instance, it only makes sense to specify a single column.
+#' @param datasets Additional lists/vectors/tables that should be included in the resulting `taxmap`
+#'   object. The `mappings` option is use to specify how these data sets relate to the `tax_data`
+#'   and, by inference, what taxa apply to each item.
+#' @param class_cols (`character` or `integer`) The names or indexes of columns that contain
+#'   classifications if the first input is a table. If multiple columns are specified, they will be
+#'   combined in the order given. Negative column indexes mean "every column besides these columns".
+#' @param class_sep (`character`) One or more separators that delineate taxon names in a
+#'   classification. For example, if one column had `"Homo sapiens"` and another had
+#'   `"Animalia;Chordata;Mammalia;Primates;Hominidae"`, then `class_sep = c(" ", ";")`. All
+#'   separators are applied to each column so order does not matter.
+#' @param sep_is_regex (`TRUE`/`FALSE`) Whether or not `class_sep` should be used as a [regular
+#'   expression](https://en.wikipedia.org/wiki/Regular_expression).
+#' @param class_key (`character` of length 1) The identity of the capturing groups defined using
+#'   `class_regex`. The length of `class_key` must be equal to the number of capturing groups
+#'   specified in `class_regex`. Any names added to the terms will be used as column names in the
+#'   output. At least one `"taxon_name"` must be specified. Only `"info"` can be used multiple
+#'   times. Each term must be one of those described below: * `taxon_name`: The name of a taxon. Not
+#'   necessarily unique, but are interpretable by a particular `database`. Requires an internet
+#'   connection. * `taxon_rank`: The rank of the taxon. This will be used to add rank info into the
+#'   output object that can be accessed by `out$taxon_ranks()`. * `info`: Arbitrary taxon info you
+#'   want included in the output. Can be used more than once.
+#' @param class_regex (`character` of length 1) A regular expression with capturing groups
+#'   indicating the locations of data for each taxon in the `class` term in the `key` argument. The
+#'   identity of the information must be specified using the `class_key` argument. The `class_sep`
+#'   option can be used to split the classification into data for each taxon before matching. If
+#'   `class_sep` is `NULL`, each match of `class_regex` defines a taxon in the classification.
+#' @param class_reversed If `TRUE`, then classifications go from specific to general. For example:
+#'   `Abditomys latidens : Muridae : Rodentia : Mammalia : Chordata`.
+#' @param include_match (`logical` of length 1) If `TRUE`, include the part of the input matched by
+#'   `class_regex` in the output object.
+#' @param mappings (named `character`) This defines how the taxonomic information in `tax_data`
+#'   applies to data set in `datasets`. This option should have the same number of inputs as
+#'   `datasets`, with values corresponding to each data set. The names of the character vector
+#'   specify what information in `tax_data` is shared with info in each `dataset`, which is
+#'   specified by the corresponding values of the character vector. If there are no shared
+#'   variables, you can add `NA` as a placeholder, but you could just leave that data out since it
+#'   is not benefiting from being in the taxmap object. The names/values can be one of the
+#'   following: * For tables, the names of columns can be used. * `"{{index}}"` : This means to use
+#'   the index of rows/items * `"{{name}}"`  : This means to use row/item names. * `"{{value}}"` :
+#'   This means to use the values in vectors or lists. Lists will be converted to vectors using
+#'   [unlist()].
+#' @param include_tax_data (`TRUE`/`FALSE`) Whether or not to include `tax_data` as a dataset, like
+#'   those in `datasets`.
+#' @param named_by_rank (`TRUE`/`FALSE`) If  `TRUE` and the input is a table with columns named by
+#'   ranks or a list of vectors with each vector named by ranks, include that rank info in the
+#'   output object, so it can be accessed by `out$taxon_ranks()`. If `TRUE`, taxa with different
+#'   ranks, but the same name and location in the taxonomy, will be considered different taxa.
+#'   Cannot be used with the `sep`, `class_regex`, or `class_key` options.
 #'
 #' @family parsers
 #'
@@ -182,6 +223,7 @@
 parse_tax_data <- function(tax_data, datasets = list(), class_cols = 1,
                            class_sep = ";", sep_is_regex = FALSE,
                            class_key = "taxon_name", class_regex = "(.*)",
+                           class_reversed = FALSE,
                            include_match = TRUE,
                            mappings = c(), include_tax_data = TRUE,
                            named_by_rank = FALSE) {
@@ -217,14 +259,23 @@ parse_tax_data <- function(tax_data, datasets = list(), class_cols = 1,
     stop('"named_by_rank = TRUE" does not make sense when "taxon_rank" is in "class_key".')
   }
 
+  # Check for zero-length inputs
+  if (length_of_thing(tax_data) <= 0) {
+    return(taxmap(data = list(tax_data = tax_data)))
+  }
+
   # Check that column exists
   for (a_col in class_cols) {
     check_class_col(tax_data, a_col)
   }
 
-  # Deal with edge cases
-  if (length(tax_data) == 0) {
-    return(taxmap())
+  # Translate negative column indexes to positive indexes
+  if (is.numeric(class_cols)) {
+    if (any(class_cols < 0) && any(class_cols > 0)) {
+      stop("Cannot use both negative and positive column indexes at once.")
+    } else if (any(class_cols < 0)) {
+      class_cols <- setdiff(seq_len(ncol(tax_data)), -class_cols)
+    }
   }
 
   # Get classificatons
@@ -259,11 +310,16 @@ parse_tax_data <- function(tax_data, datasets = list(), class_cols = 1,
   # Remove white space
   parsed_tax <- lapply(parsed_tax, trimws)
 
+  # Reverse order of taxa in classifications
+  if (class_reversed) {
+    parsed_tax <- lapply(parsed_tax, rev)
+  }
+
   # Check for NAs in input
   na_indexes <- which(vapply(parsed_tax, function(x) any(is.na(x)), logical(1)))
   if (length(na_indexes) > 0) {
-    warning(call. = FALSE,
-            'The following ', length(na_indexes),' of ', length(parsed_tax),
+    message('The following ', length(na_indexes),' of ', length(parsed_tax),
+            ' (', to_percent(length(na_indexes) / length(parsed_tax)), ')',
             ' input indexes have `NA` in their classifications:\n',
             limited_print(na_indexes, prefix = "  ", type = "silent"))
   }
@@ -295,6 +351,7 @@ parse_tax_data <- function(tax_data, datasets = list(), class_cols = 1,
       stats::setNames(x[[which(class_key == "taxon_name") + 1]],
                       x[[which(class_key == "taxon_rank") + 1]])
     })
+    named_by_rank <- TRUE
   } else if (named_by_rank)  {
     parsed_tax <- lapply(taxon_info, function(x) {
       stats::setNames(x[[which(class_key == "taxon_name") + 1]],
@@ -320,14 +377,7 @@ parse_tax_data <- function(tax_data, datasets = list(), class_cols = 1,
   names(taxon_info) <- c("match", taxon_info_colnames)
 
   # Create taxmap object
-  hier_objs <- lapply(parsed_tax, function(x) {
-    output <- hierarchy()
-    output$taxa <- lapply(seq_len(length(x)), function(i) {
-      taxon(x[i], rank = names(x[i]))
-    })
-    return(output)
-  })
-  output <- taxmap(.list = hier_objs)
+  output <- taxmap(.list = parsed_tax, named_by_rank = named_by_rank)
 
   # Add taxon ids to extracted info and add to data
   if (ncol(taxon_info) > 2) {
@@ -358,9 +408,6 @@ parse_tax_data <- function(tax_data, datasets = list(), class_cols = 1,
     mappings <- c("{{index}}" = "{{index}}", mappings)
   }
 
-  # Convert additional tables to tibbles
-  are_tables <- vapply(datasets, is.data.frame, logical(1))
-  datasets[are_tables] <- lapply(datasets[are_tables], dplyr::as.tbl)
 
   # Add additional data sets
   name_datset <- function(dataset, sort_var) {
@@ -383,6 +430,10 @@ parse_tax_data <- function(tax_data, datasets = list(), class_cols = 1,
                                           function(i) name_datset(datasets[[i]],
                                                                   mappings[i])),
                                    names(datasets)))
+
+  # Convert additional tables to tibbles
+  are_tables <- vapply(output$data, is.data.frame, logical(1))
+  output$data[are_tables] <- lapply(output$data[are_tables], dplyr::as.tbl)
 
   # Fix incorrect taxon ids in data if a list of data.frames is given
   if (is_list_of_frames && include_tax_data) {
@@ -557,6 +608,12 @@ lookup_tax_data <- function(tax_data, type, column = 1, datasets = list(),
                             mappings = c(), database = "ncbi",
                             include_tax_data = TRUE, use_database_ids = TRUE,
                             ask = TRUE) {
+
+  # Check for zero-length inputs
+  if (length_of_thing(tax_data) <= 0) {
+    return(taxmap(data = list(tax_data = tax_data)))
+  }
+
   # Make sure taxize is installed
   check_for_pkg("taxize")
 
@@ -952,7 +1009,9 @@ get_sort_var <- function(data, var) {
 #'
 #' @return Returns an object of type [taxmap()]
 #'
-#' @examples \dontrun{
+#' @examples
+#'
+#' \dontrun{
 #'
 #'   # For demonstration purposes, the following example dataset has all the
 #'   # types of data that can be used, but any one of them alone would work.
@@ -993,13 +1052,21 @@ extract_tax_data <- function(tax_data, key, regex, class_key = "taxon_name",
                              sep_is_regex = FALSE,
                              class_rev = FALSE, database = "ncbi",
                              include_match = FALSE, include_tax_data = TRUE) {
+
+  # Check for zero-length inputs
+  if (length_of_thing(tax_data) <= 0) {
+    return(taxmap(data = list(tax_data = tax_data)))
+  }
+
   # Check regex/keys
   key <- validate_regex_key_pair(regex, key, multiple_allowed = "info")
   class_key <- validate_regex_key_pair(class_regex, class_key, multiple_allowed = "info")
+
   # classification sep
   if (!is.null(class_sep) && (class(class_sep) != "character" | length(class_sep) != 1)) {
     stop('"class_sep" must be a character vector of length 1 or NULL')
   }
+
   # Boolean options
   if (class(class_rev) != "logical" | length(class_rev) != 1) {
     stop('"class_rev" must be TRUE/FALSE')
@@ -1010,6 +1077,7 @@ extract_tax_data <- function(tax_data, key, regex, class_key = "taxon_name",
   if (class(include_tax_data) != "logical" | length(include_tax_data) != 1) {
     stop('"include_tax_data" must be TRUE/FALSE')
   }
+
   # database
   valid_databases <- c(names(database_list), "none")
   if (! database %in% valid_databases) {
@@ -1027,7 +1095,7 @@ extract_tax_data <- function(tax_data, key, regex, class_key = "taxon_name",
   # Complain about failed matches
   failed <- which(apply(is.na(parsed_input), MARGIN = 1, FUN = all))
   if (length(failed) > 0) {
-    warning(paste0("The following input indexes failed to match the regex supplied:\n",
+    warning(paste0("The following ", length(failed), " input indexes failed to match the regex supplied:\n",
                    limited_print(failed, type = "silent")), call. = FALSE)
     parsed_input <- parsed_input[-failed, ]
   }
@@ -1193,7 +1261,7 @@ count_capture_groups <- function(regex) {
 check_class_col <- function(tax_data, column) {
   if (is.data.frame(tax_data)) {
     if (is.numeric(column)) {
-      if (column < 1 || column > ncol(tax_data)) {
+      if (column == 0 || abs(column) > ncol(tax_data)) {
         stop(call. = FALSE,
              'Column index "', column, '" out of bounds. Must be between 1 and ',
              ncol(tax_data), '.')

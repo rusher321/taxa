@@ -324,6 +324,12 @@ test_that("Names in invalid expressions can be found by NSE", {
                                            aslkadsldsa)))
 })
 
+test_that("Names of varaibles referred to by full $ path are not returned", {
+  expect_equal(length(test_obj$names_used(data$abund$count)), 0)
+  expect_equal(length(test_obj$names_used(data$count)), 0)
+  expect_equal(length(test_obj$names_used(count)), 1)
+})
+
 #### get_data
 
 test_that("NSE values can be found", {
@@ -344,6 +350,22 @@ test_that("All valid NSE values can be found", {
 test_that("Using ambiguous names in NSE generates a warning", {
   expect_equal(names(get_data(test_obj)), unname(all_names(test_obj)))
 })
+
+
+#### Get datasets
+
+test_that("datasets can be accessed", {
+  # Works right with valid input
+  expect_identical(get_dataset(test_obj, "info"), test_obj$data$info)
+  expect_identical(get_dataset(test_obj, 1), test_obj$data$info)
+  expect_identical(get_dataset(test_obj,  names(test_obj$data) == "info"), test_obj$data$info)
+
+  # Fails with invalid input
+  expect_error(get_dataset(test_obj, "not valid"), 'The dataset "not valid" cannot be found')
+  expect_error(get_dataset(test_obj, 123), 'The dataset "123" cannot be found')
+  expect_error(get_dataset(test_obj, TRUE), 'must be the same length')
+})
+
 
 #### get_data_frame
 
@@ -392,12 +414,19 @@ test_that("Mapping simplification between observations and the edge list works",
   expect_equal(obs(test_obj, "info", simplify = TRUE), 1:6)
 })
 
-test_that("Mapping observations in external tables", {
+test_that("Mapping observations in external variables", {
   external_table <- data.frame(taxon_id = c("p", "n"),
                                my_name = c("Joe", "Fluffy"))
   expect_equal(eval(substitute(obs(test_obj, external_table)$`b`)), c(2, 1))
+
   external_table <- data.frame(my_name = c("Joe", "Fluffy"))
   expect_error(eval(substitute(obs(test_obj, external_table))), 'no "taxon_id" column')
+
+  extern_vec <- c(p = "Joe", n = "Fluffy")
+  expect_equal(eval(substitute(obs(test_obj, extern_vec)$`b`)), c(2, 1))
+
+  extern_vec <- c("Joe", "Fluffy")
+  expect_error(eval(substitute(obs(test_obj, extern_vec))), 'no taxon ids')
 })
 
 test_that("Mapping observations when there are multiple obs per taxon", {
@@ -520,6 +549,13 @@ test_that("Default observation filtering works", {
                "Most things, but especially anything rare or expensive")
 })
 
+test_that("Datasets can be specified using names, numbers, and characters", {
+  result <- filter_obs(test_obj, c("info", "foods"), n_legs == 2)
+  expect_equal(result, filter_obs(test_obj, c(1, 3), n_legs == 2))
+  expect_equal(result, filter_obs(test_obj, 1:4 %in% c(1, 3), n_legs == 2))
+})
+
+
 test_that("Filtering observations with external variables work", {
   my_logical <- test_obj$data$info$n_legs == 2 & test_obj$data$info$dangerous == TRUE
   expect_equal(filter_obs(test_obj, "info", n_legs == 2, dangerous == TRUE),
@@ -561,11 +597,35 @@ test_that("Edge cases return reasonable outputs", {
                           "not the name of a data set. Valid targets "))
   expect_error(filter_obs(test_obj, "info", "11"),
                "observation filtering with taxon IDs is not currently")
+  expect_error(filter_obs(test_obj, character(0)),
+               "At least one dataset must be specified.")
+
 })
 
 test_that("Filtering obs when there are multiple obs per taxon", {
   result <- filter_obs(test_obj, "abund", code == "C", drop_taxa = TRUE)
   expect_equal(nrow(result$data$abund), 2)
+})
+
+
+test_that("Filtering multiple datasets at once", {
+  result <- filter_obs(test_obj, c("phylopic_ids", "info"), n_legs < 4, drop_taxa = TRUE)
+  expect_equal(length(result$data$phylopic_ids), 3)
+  expect_equal(nrow(result$data$info), 3)
+
+  # Multiple datasets with different taxon IDs
+  test_obj_2 <- test_obj$clone(deep = TRUE)
+  test_obj_2$data$abund_2 <- test_obj_2$data$abund
+  test_obj_2$data$abund_2$taxon_id <- rep("r", 8)
+  result <- expect_warning(filter_obs(test_obj_2, c("abund", "abund_2"), code == "C", drop_taxa = TRUE))
+  expect_true("tuberosum" %in% taxon_names(result))
+  expect_true(! "sapiens" %in% taxon_names(result))
+  expect_equal(nrow(result$data$abund), 2)
+  expect_equal(nrow(result$data$abund_2), 2)
+
+  # Datasets of different length cannot be filtered
+  expect_error(filter_obs(test_obj, c("phylopic_ids", "abund"), n_legs < 4, drop_taxa = TRUE),
+               "If multiple datasets are filtered at once, then they must the same length")
 })
 
 
@@ -580,11 +640,17 @@ test_that("Edge cases return reasonable outputs during observation column subset
   result <- select_obs(test_obj, "info")
   expect_equal(colnames(result$data$info), c("taxon_id"))
   expect_error(select_obs(test_obj, "not_valid"),
-               "not the name of a data set. Valid targets ")
+               "The input does not correspond to a valid dataset")
   expect_error(select_obs(test_obj), " missing, with no default")
-  expect_error(select_obs(test_obj, "foods"), 'The dataset "foods" is not a table')
-  expect_error(select_obs(test_obj, "phylopic_ids"),
-               'The dataset "phylopic_ids" is not a table')
+  expect_error(select_obs(test_obj, "foods"), 'not a table, so columns cannot be selected')
+})
+
+test_that("The columns of multiple datasets can be subset at once", {
+  test_obj_2 <- test_obj$clone(deep = TRUE)
+  test_obj_2$data$abund_2 <- test_obj_2$data$abund
+  result <- select_obs(test_obj_2, c("abund", "abund_2"), count, code)
+  expect_equal(colnames(result$data$abund), c("taxon_id", "count", "code"))
+  expect_equal(colnames(result$data$abund_2), c("taxon_id", "count", "code"))
 })
 
 
@@ -604,9 +670,9 @@ test_that("Observation column replacement works",  {
 
 test_that("Edge cases for observation column addition",  {
   expect_equal(mutate_obs(test_obj, "info"), test_obj)
-  expect_error(select_obs(test_obj, "foods"), 'The dataset "foods" is not a table')
+  expect_error(select_obs(test_obj, "foods"), 'not a table, so columns cannot be selected.')
   expect_error(select_obs(test_obj, "phylopic_ids"),
-               'The dataset "phylopic_ids" is not a table')
+               'is not a table, so columns cannot be selected.')
 })
 
 test_that("New tables and vectors can be made",  {
@@ -628,8 +694,6 @@ test_that("New tables and vectors can be made",  {
   expect_equal(length(result$data$new_table), 0)
 
  # Invlaid: inputs of mixed lengths
-  expect_error(mutate_obs(test_obj, "new_table", a = 1, b = character(0)),
-               "must be length 1, not 0")
   expect_error(mutate_obs(test_obj, "new_table", a = 1:3, b = 2:8),
                "Cannot make a new table out of multiple values of unequal length")
 
@@ -664,10 +728,10 @@ test_that("Edge cases for observation column addition (transmute) ",  {
   result <- transmute_obs(test_obj, "info")
   expect_equal("taxon_id", colnames(result$data$info))
   expect_error(transmute_obs(test_obj, "not_valid"),
-               "not the name of a data set. Valid targets ")
-  expect_error(select_obs(test_obj, "foods"), 'The dataset "foods" is not a table')
+               "The input does not correspond to a valid dataset")
+  expect_error(select_obs(test_obj, "foods"), 'not a table, so columns cannot be selected')
   expect_error(select_obs(test_obj, "phylopic_ids"),
-               'The dataset "phylopic_ids" is not a table')
+               'not a table, so columns cannot be selected')
 })
 
 
@@ -698,7 +762,15 @@ test_that("Sorting observations with non-target NSE values",  {
 test_that("Edge cases during observation sorting works",  {
   expect_equal(arrange_obs(test_obj, "info"), test_obj)
   expect_error(arrange_obs(test_obj, "not_valid"),
-               "not the name of a data set. Valid targets ")
+               "The input does not correspond to a valid dataset")
+})
+
+test_that("Sorting multiple datasets works",  {
+  result <- arrange_obs(test_obj, c("info", "phylopic_ids", "foods"), n_legs)
+  expect_equal(test_obj$data$info$taxon_id[order(test_obj$data$info$n_legs)],
+               result$data$info$taxon_id)
+  expect_equal(result$data$info$taxon_id, names(result$data$phylopic_ids))
+  expect_equal(result$data$info$taxon_id, names(result$data$foods))
 })
 
 
@@ -763,7 +835,7 @@ test_that("Edge cases during sampling observations",  {
   expect_error(sample_n_obs(test_obj),
                "missing, with no default")
   expect_error(sample_n_obs(test_obj, "not_valid"),
-               "not the name of a data set. Valid targets ")
+               "The input does not correspond to a valid dataset.")
 })
 
 
@@ -820,3 +892,4 @@ test_that("dots and .list return the same output", {
                                   foods = foods),
                       funcs = list(reaction = reaction)))
 })
+

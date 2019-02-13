@@ -247,3 +247,40 @@ get_dots_or_list <- function(..., .list = NULL) {
     return(list())
   }
 }
+
+#' Format a proportion as a printed percent
+#'
+#' Format a proportion as a printed percent
+#'
+#' @param prop The proportion
+#' @param ... passed to `format`
+#' @inheritParams base::format
+#'
+#' @return character
+#'
+#' @keywords internal
+to_percent <- function(prop, digits = 3, ...) {
+  if (prop < .00001) {
+    return("< 0.001%")
+  } else {
+    return(paste0(format(prop * 100, digits = digits, ...), '%'))
+  }
+}
+
+
+#' Check length of thing
+#'
+#' Check the length of an object, be it list, vector, or table.
+#'
+#' @param obj
+#'
+#' @return \code{numeric} of length 1.
+#'
+#' @keywords internal
+length_of_thing <- function(obj) {
+  if (is.data.frame(obj)) {
+    return(nrow(obj))
+  } else {
+    return(length(obj))
+  }
+}

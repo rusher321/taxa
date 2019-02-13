@@ -93,13 +93,13 @@ test_that("Taxmap can be intialized from complex data", {
                            class_key = c("taxon_rank", "taxon_name", "info", x = "info"))
   expect_true(all(c("info_match", "x") %in% colnames(result$data$class_data)))
 
-  # Check for data names that are the same as function names
-  expect_warning(parse_tax_data(raw_data, class_sep = ";",
-                                class_regex = "^(.+)__(.+)$",
-                                class_key = c(rank = "info",
-                                              tax_name = "taxon_name"),
-                                include_match = FALSE),
-                 "same name as functions")
+  # # Check for data names that are the same as function names
+  # expect_warning(parse_tax_data(raw_data, class_sep = ";",
+  #                               class_regex = "^(.+)__(.+)$",
+  #                               class_key = c(rank = "info",
+  #                                             tax_name = "taxon_name"),
+  #                               include_match = FALSE),
+  #                "same name as functions")
 
   # Invalid regex error
   expect_error(parse_tax_data(raw_data, class_sep = ";",
@@ -112,8 +112,6 @@ test_that("Taxmap can be intialized from complex data", {
   # Expect an error if bad column name
   expect_error(parse_tax_data(raw_data, class_cols = "Not a column"),
                'No item')
-  expect_error(parse_tax_data(raw_data, class_cols = -1),
-               'Column index')
   expect_error(parse_tax_data(1:3, class_cols = "Not a column"),
                'No item named')
   expect_error(parse_tax_data(1:3, class_cols = 10),
@@ -128,10 +126,19 @@ test_that("Taxmap can be intialized from complex data", {
                'Invalid inputs to the `mappings` found')
 
 
+  # Zero-length inputs produce empty taxmap objects
+  expect_equal(taxon_names(parse_tax_data(c())),          character(0))
+  expect_equal(taxon_names(parse_tax_data(character(0))), character(0))
+  expect_equal(taxon_names(parse_tax_data(list())),       character(0))
+  expect_equal(taxon_names(parse_tax_data(data.frame())), character(0))
+
 })
 
 
 test_that("Taxmap can be intialized from queried data", {
+
+  skip_on_cran()
+
   # Make test data
   raw_data <- data.frame(tax = c("Mammalia;Carnivora;Felidae",
                                  "Mammalia;Carnivora;Felidae",
@@ -151,6 +158,7 @@ test_that("Taxmap can be intialized from queried data", {
                 c("salmon", "fruit", "nuts"))
 
   # Parsing with taxon names
+  Sys.sleep(1)
   name_result = lookup_tax_data(raw_data,
                                 type = "taxon_name",
                                 datasets = list(counts = abundance,
@@ -160,10 +168,13 @@ test_that("Taxmap can be intialized from queried data", {
                                              "species_id" = "{{name}}",
                                              "{{index}}" = "{{index}}"),
                                 column = "species")
+  Sys.sleep(1)
 
   # Parsing with fuzzy taxon name matches
   expect_equal(lookup_tax_data("poa annus", type = "fuzzy_name")$taxon_names(),
                lookup_tax_data("Poa annua", type = "taxon_name")$taxon_names())
+  Sys.sleep(1)
+
 
   # Parsing with taxon ids
   id_result = lookup_tax_data(raw_data,
@@ -175,6 +186,8 @@ test_that("Taxmap can be intialized from queried data", {
                                            "species_id" = "{{name}}",
                                            "{{index}}" = "{{index}}"),
                               column = "my_tax_id")
+  Sys.sleep(1)
+
 
   # Parsing with sequence ids
   seq_result = lookup_tax_data(raw_data,
@@ -186,6 +199,7 @@ test_that("Taxmap can be intialized from queried data", {
                                             "species_id" = "{{name}}",
                                             "{{index}}" = "{{index}}"),
                                column = "my_seq")
+  Sys.sleep(1)
 
   expect_equal(name_result, id_result)
   expect_equal(name_result, seq_result)
@@ -202,15 +216,13 @@ test_that("Taxmap can be intialized from queried data", {
   expect_error(lookup_tax_data(raw_data, column = "Not a column",
                                type = "seq_id"),
                'No column "Not a column" in input table')
-  expect_error(lookup_tax_data(raw_data, column = -1,
-                               type = "seq_id"),
-               'Column index "-1" out of bounds')
   expect_error(lookup_tax_data(1:3, column = "Not a column", type = "seq_id"),
                'No item named "Not a column" in the following inputs:')
   expect_error(lookup_tax_data(1:3, column = 10, type = "seq_id"),
                'out of bounds for inputs:')
 
   # Failed downloads
+  Sys.sleep(1)
   raw_data <- data.frame(species = c("Panthera leo",
                                      "not a taxon",
                                      "Ursus americanus"),
@@ -225,11 +237,17 @@ test_that("Taxmap can be intialized from queried data", {
   expect_warning(result <- lookup_tax_data(raw_data, type = "seq_id", column = "my_seq"))
   expect_equal(result$data$query_data$taxon_id[2], "unknown")
 
+  # Zero-length inputs produce empty taxmap objects
+  expect_equal(taxon_names(lookup_tax_data(c())),          character(0))
+  expect_equal(taxon_names(lookup_tax_data(character(0))), character(0))
+  expect_equal(taxon_names(lookup_tax_data(list())),       character(0))
+  expect_equal(taxon_names(lookup_tax_data(data.frame())), character(0))
 })
 
 
 
 test_that("Taxmap can be intialized from raw strings", {
+
   raw_data <- c(">var_1:A--var_2:9689--non_target--tax:K__Mammalia;P__Carnivora;C__Felidae;G__Panthera;S__leo",
                 ">var_1:B--var_2:9694--non_target--tax:K__Mammalia;P__Carnivora;C__Felidae;G__Panthera;S__tigris",
                 ">var_1:C--var_2:9643--non_target--tax:K__Mammalia;P__Carnivora;C__Felidae;G__Ursus;S__americanus")
@@ -241,11 +259,6 @@ test_that("Taxmap can be intialized from raw strings", {
   expect_equal(length(result$taxa), 8)
   expect_equal(result$data$tax_data$var_1, c("A", "B", "C"))
   expect_true("my_rank" %in% colnames(result$data$class_data))
-
-  # Test looking up variables extracted from raw strings
-  extract_tax_data(raw_data,
-                   key = c(var_1 = "info", var_2 = "taxon_id", tax = "info"),
-                   regex = "^>var_1:(.+)--var_2:(.+)--non_target--tax:(.+)$")
 
   # test that different info with same sep can be used in classifications
   raw_data <- c("K;Mammalia;P;Carnivora;C;Felidae;G;Panthera;S;leo;",
@@ -265,11 +278,32 @@ test_that("Taxmap can be intialized from raw strings", {
                 "not a match",
                 ">var_1:C--var_2:9643--non_target--tax:K__Mammalia;P__Carnivora;C__Felidae;G__Ursus;S__americanus")
   expect_warning(extract_tax_data(raw_data,
-                             key = c(var_1 = "info", var_2 = "info", tax = "class"),
-                             regex = "^>var_1:(.+)--var_2:(.+)--non_target--tax:(.+)$",
-                             class_sep = ";", class_regex = "^(.+)__(.+)$",
-                             class_key = c(my_rank = "info", tax_name = "taxon_name")),
+                                  key = c(var_1 = "info", var_2 = "info", tax = "class"),
+                                  regex = "^>var_1:(.+)--var_2:(.+)--non_target--tax:(.+)$",
+                                  class_sep = ";", class_regex = "^(.+)__(.+)$",
+                                  class_key = c(my_rank = "info", tax_name = "taxon_name")),
                  "indexes failed to match the regex supplied")
 
+  # Zero-length inputs produce empty taxmap objects
+  expect_equal(taxon_names(extract_tax_data(c())),          character(0))
+  expect_equal(taxon_names(extract_tax_data(character(0))), character(0))
+  expect_equal(taxon_names(extract_tax_data(list())),       character(0))
 })
 
+
+test_that("Taxmap can be intialized from raw strings and lookup data", {
+  skip_on_cran()
+
+  raw_data <- c(">var_1:A--var_2:9689--non_target--tax:K__Mammalia;P__Carnivora;C__Felidae;G__Panthera;S__leo",
+                ">var_1:B--var_2:9694--non_target--tax:K__Mammalia;P__Carnivora;C__Felidae;G__Panthera;S__tigris",
+                ">var_1:C--var_2:9643--non_target--tax:K__Mammalia;P__Carnivora;C__Felidae;G__Ursus;S__americanus")
+
+  # Test looking up variables extracted from raw strings
+  Sys.sleep(1)
+  result <- extract_tax_data(raw_data,
+                             key = c(var_1 = "info", var_2 = "taxon_id", tax = "info"),
+                             regex = "^>var_1:(.+)--var_2:(.+)--non_target--tax:(.+)$")
+  expect_true("ncbi_id" %in% colnames(result$data$tax_data))
+  expect_equivalent(result$roots(value = "taxon_names"), "cellular organisms")
+
+})
