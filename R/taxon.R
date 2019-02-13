@@ -120,9 +120,9 @@ Taxon <- R6::R6Class(
       cat(paste0(indent, paste0("  rank: ",
                                 self$get_rank() %||% "none", "\n")))
       cat(paste0(indent, paste0("  id: ",
-                                private$get_id() %||% "none", "\n")))
+                                self$get_id() %||% "none", "\n")))
       cat(paste0(indent, paste0("  url: ",
-                                private$get_url() %||% "none", "\n")))
+                                self$get_url() %||% "none", "\n")))
       cat(paste0(indent, paste0("  authority: ",
                                 self$authority %||% "none", "\n")))
       cat(paste0(indent, "  attributes:\n"))

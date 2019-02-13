@@ -4,7 +4,8 @@
 \alias{taxon}
 \title{Taxon class}
 \usage{
-taxon(name, rank = NULL, id = NULL, authority = NULL, attributes = NULL)
+taxon(name, rank = NULL, id = NULL, authority = NULL,
+  attributes = NULL)
 }
 \arguments{
 \item{name}{a TaxonName object \code{\link[=taxon_name]{taxon_name()}} or character string. if
