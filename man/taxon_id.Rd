@@ -33,6 +33,13 @@ x$database
 ))
 x$id
 x$database
+<<<<<<< HEAD
+=======
+
+# a null taxon_name object
+taxon_name(NULL)
+
+>>>>>>> eval
 }
 \seealso{
 Other classes: \code{\link{hierarchies}},

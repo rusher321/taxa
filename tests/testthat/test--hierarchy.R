@@ -34,7 +34,7 @@ test_that("hierarchy - empty", {
   aa <- hierarchy()
 
   expect_is(aa, "Hierarchy")
-  expect_null(aa$taxa)
+  expect_equal(length(aa$taxa), 0)
   expect_null(aa$ranklist)
 
   # prints 'Empty hierarchy'
@@ -87,11 +87,11 @@ test_that("hierarchy - print when not empty", {
 
 test_that("hierarchy fails well", {
   expect_error(
-    hierarchy(4),
-    "all inputs to 'hierarchy' must be of class 'Taxon' or 'character'")
+    hierarchy(mtcars),
+    "taxon name must be a class that is or inherits one of the following classes")
   expect_error(
-    hierarchy(solanum, 5),
-    "all inputs to 'hierarchy' must be of class 'Taxon' or 'character'")
+    hierarchy(c, 5),
+    "taxon name must be a class that is or inherits one of the following classes")
 })
 
 
@@ -104,13 +104,13 @@ test_that("hierarchy can do null data", {
   # empty hierarchy()
   x <- hierarchy()
   expect_is(x, "Hierarchy")
-  expect_null(x$taxa)
+  expect_equal(length(x$taxa), 0)
   expect_null(x$ranklist)
 
   # specifying NULL
-  x <- hierarchy(NULL)
+  x <- hierarchy(NULL, NULL)
   expect_is(x, "Hierarchy")
-  expect_null(x$taxa)
+  expect_equal(length(x$taxa), 2)
   expect_null(x$ranklist)
 })
 

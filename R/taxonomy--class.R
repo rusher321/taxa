@@ -17,16 +17,16 @@
 #' @family classes
 #'
 #' @template taxonomyegs
-
 taxonomy <- function(..., .list = NULL, named_by_rank = FALSE) {
   Taxonomy$new(..., .list = .list, named_by_rank = named_by_rank)
 }
 
+#' @export
 Taxonomy <- R6::R6Class(
   "Taxonomy",
+  inherit = Taxa,
   lock_class = TRUE,
   public = list(
-    taxa = NULL,
     edge_list = NULL, # Note: this should be made of taxon ids, not indexes
     input_ids = NULL, # Only used by `Taxmap` right now
 
@@ -51,6 +51,21 @@ Taxonomy <- R6::R6Class(
              character(1))
     },
 
+
+    # --------------------------------------------------------------------------
+    #  Set taxon names
+    set_taxon_names = function(value) {
+      if (length(value) !=  length(self$taxa))
+      {
+        stop(call. = FALSE, 'New taxon names must be of the same length as the number of taxa and in the same order as taxa.')
+      }
+
+      for (i in seq_len(length(self$taxa))) {
+        self$taxa[[i]]$name$name <- as.character(value[[i]])
+      }
+    },
+
+
     # --------------------------------------------------------------------------
     # Return the taxon ranks in a taxonomy() or taxmap() object.
     # They are in the order taxa appear in the edge list.
@@ -64,6 +79,32 @@ Taxonomy <- R6::R6Class(
                }
              },
              character(1))
+    },
+
+    # --------------------------------------------------------------------------
+    #  Set taxon names
+    set_taxon_ranks = function(value) {
+      if (length(value) !=  length(self$taxa))
+      {
+        stop(call. = FALSE, 'New taxon ranks must be of the same length as the number of taxa and in the same order as taxa.')
+      }
+
+      for (i in seq_len(length(self$taxa))) {
+        self$taxa[[i]]$rank$name <- as.character(value[[i]])
+      }
+    },
+
+    # --------------------------------------------------------------------------
+    #  Set taxon authorities
+    set_taxon_auths = function(value) {
+      if (length(value) !=  length(self$taxa))
+      {
+        stop(call. = FALSE, 'New taxon authorities must be of the same length as the number of taxa and in the same order as taxa.')
+      }
+
+      for (i in seq_len(length(self$taxa))) {
+        self$taxa[[i]]$authority <- as.character(value[[i]])
+      }
     },
 
     # --------------------------------------------------------------------------
@@ -110,7 +151,14 @@ Taxonomy <- R6::R6Class(
                       prefix = paste0(indent, "  ",
                                       length(self$taxa), " taxa:"),
                       type = "cat")
-        limited_print(private$make_graph(),
+        if (nrow(self$edge_list) > 100) { # Needed so that a lot of time is not used formatting edges that will not be printed
+          el_text <- apply(self$edge_list[c(1:50, (nrow(self$edge_list) - 50):nrow(self$edge_list)), ], 1,
+                           function(x) paste0(tid_font(x), collapse = punc_font("->")))
+        } else {
+          el_text <- apply(self$edge_list, 1,
+                           function(x) paste0(tid_font(x), collapse = punc_font("->")))
+        }
+        limited_print(el_text,
                       sep = punc_font(", "),
                       mid = punc_font(" ... "),
                       trunc_char = punc_font("[truncated]"),
@@ -247,6 +295,30 @@ Taxonomy <- R6::R6Class(
       self$get_data(my_names_used)
     },
 
+    # --------------------------------------------------------------------------
+    # Evaluate multiple expressions that might include data from this object and returns a list
+    eval_many = function(...) {
+      arguments <- rlang::enquos(...)
+      expressions <- lapply(arguments, rlang::get_expr)
+      obj_data_used <- rlang::eval_tidy(rlang::call2(self$data_used, !!! expressions))
+      output <- list()
+      for (index in seq_len(length(arguments))) {
+        output <- c(output, list(rlang::eval_tidy(arguments[[index]], data = obj_data_used)))
+        if (! is.null(names(arguments)) && ! is.na(names(arguments)[index]) && names(arguments)[index] != "") {
+          names(output)[index] <- names(arguments)[index]
+          obj_data_used <- c(obj_data_used, output[index]) # Allow previously evaluated arguments to be used
+        }
+      }
+      return(output)
+    },
+
+    # --------------------------------------------------------------------------
+    # Evaluate one expressions that might include data from this object and returns the result
+    eval_one = function(input) {
+      argument <- rlang::enquo(input)
+      obj_data_used <- rlang::eval_tidy(rlang::call2(self$data_used, rlang::get_expr(argument)))
+      rlang::eval_tidy(argument, data = obj_data_used)
+    },
 
     # --------------------------------------------------------------------------
     # Return data for supertaxa (i.e. all taxa the target taxa are a part of)
@@ -1205,11 +1277,6 @@ Taxonomy <- R6::R6Class(
                              "is_branch",
                              "is_leaf",
                              "is_internode"),
-
-    # --------------------------------------------------------------------------
-    make_graph = function() {
-      apply(self$edge_list, 1, function(x) paste0(tid_font(x), collapse = punc_font("->")))
-    },
 
     # --------------------------------------------------------------------------
     # Remove taxa NOT in "el_indexes"
