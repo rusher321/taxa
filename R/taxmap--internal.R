@@ -203,6 +203,7 @@ check_taxmap_data <- function(obj) {
 #'
 #' @keywords internal
 as_id <- function(ids, database, ...) {
+  check_for_pkg("taxize")
   id_constructors <- list(ncbi = taxize::as.uid,
                           itis = taxize::as.tsn,
                           iucn = taxize::as.iucn,
