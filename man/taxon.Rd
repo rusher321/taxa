@@ -20,7 +20,8 @@ TaxonId object internally, required}
 
 \item{authority}{(character) a character string, optional}
 
-\item{attributes}{(list) a named list of arbitrary attributes}
+\item{attributes}{(list) a named list of arbitrary attributes. if given,
+all attributes must be named}
 }
 \value{
 An \code{R6Class} object of class \code{Taxon}
@@ -64,14 +65,16 @@ x$id
     hello = "world"
   )
 ))
+x$attributes
 
 # include a URL in your taxon_id() call - used in print method
 (x <- taxon(
   name = taxon_name("Poa annua"),
   rank = taxon_rank("species"),
-  id = taxon_id(93036, "https://www.ncbi.nlm.nih.gov/taxonomy/93036", database_list$ncbi)
+  id = taxon_id(93036, database_list$ncbi, "https://www.ncbi.nlm.nih.gov/taxonomy/93036")
 ))
 ## open the URL in default browser
+x$id$url
 x$browse()
 }
 \seealso{

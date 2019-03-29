@@ -4,15 +4,15 @@
 \alias{taxon_id}
 \title{Taxon ID class}
 \usage{
-taxon_id(id, url = NULL, database = NULL)
+taxon_id(id, database = NULL, url = NULL)
 }
 \arguments{
 \item{id}{(character/integer/numeric) a taxonomic id, required}
 
+\item{database}{(database) database class object, optional}
+
 \item{url}{(character) url/uri for the taxon, should be associated with the
 database given to the \code{database} parameter}
-
-\item{database}{(database) database class object, optional}
 }
 \value{
 An \code{R6Class} object of class \code{TaxonId}
@@ -33,13 +33,10 @@ x$database
 ))
 x$id
 x$database
-<<<<<<< HEAD
-=======
 
 # a null taxon_name object
 taxon_name(NULL)
 
->>>>>>> eval
 }
 \seealso{
 Other classes: \code{\link{hierarchies}},
