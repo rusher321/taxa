@@ -330,7 +330,9 @@ char_or_placeholder <- function(thing, placeholder = "[none]") {
   if (is.null(thing) || length(thing) == 0) {
     return(placeholder)
   } else {
-    return(as.character(thing))
+    str <- as.character(thing)
+    if (length(str) == 0) str <- placeholder
+    return(str)
   }
 }
 
