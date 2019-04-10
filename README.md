@@ -3,7 +3,8 @@ taxa
 
 [![Build
 Status](https://travis-ci.org/ropensci/taxa.svg?branch=master)](https://travis-ci.org/ropensci/taxa)
-[![cran checks](https://cranchecks.info/badges/worst/taxa)](https://cranchecks.info/pkgs/taxa)
+[![cran
+checks](https://cranchecks.info/badges/worst/taxa)](https://cranchecks.info/pkgs/taxa)
 [![codecov](https://codecov.io/gh/ropensci/taxa/branch/master/graph/badge.svg)](https://codecov.io/gh/ropensci/taxa)
 [![Project Status: WIP - Initial development is in progress, but there
 has not yet been a stable, usable release suitable for the
@@ -15,7 +16,8 @@ version](http://www.r-pkg.org/badges/version/taxa)](https://cran.r-project.org/p
 
 `taxa` defines taxonomic classes and functions to manipulate them. The
 goal is to use these classes as low level fundamental taxonomic classes
-that other R packages can build on and use.
+that other R packages can build on and supply robust manipulation
+functions (e.g. subsetting) that are broadly useful.
 
 There are two distinct types of classes in `taxa`:
 
@@ -30,21 +32,24 @@ Diagram of class concepts for `taxa` classes:
 <img src="vignettes/class_diagram.png" title="taxa classes diagram" width="718">
 
 Relationship between classes implemented in the taxa package.
-Diamond-tipped arrows indicate that objects of a one are used in another
-class. For example, a database object can stored in the taxon\_rank,
-taxon\_name, or taxon\_id objects. A standard arrow indicates
-inheritance. For example, the taxmap class inherits the taxonomy class.
-`*` means that the object (e.g. a database object) can be replaced by a
-simple character vector. `?` means that the data is optional.
+Diamond-tipped arrows indicate that objects of one class are used in
+another class. For example, a database object can stored in the
+taxon\_rank, taxon\_name, or taxon\_id objects. A standard arrow
+indicates inheritance. For example, the taxmap class inherits the
+taxonomy class. `*` means that the object (e.g. a database object) can
+be replaced by a simple character vector. `?` means that the data is
+optional (Note: being able to replace objects with characters might be
+going away soon).
 
 Install
 -------
 
-CRAN version
+For the latest "stable" release, use the CRAN version:
 
     install.packages("taxa")
 
-Development version from GitHub
+For all the latest improvements, bug fixes, and bugs, you can download
+the development version:
 
     devtools::install_github("ropensci/taxa")
 
@@ -56,9 +61,8 @@ The classes
 ### Minor component classes
 
 There are a few optional classes used to store information in other
-classes. In most cases, these can be replaced with simple character
-values but using them provides more information and potential
-functionality.
+classes. These will probably mostly be of interest to developers rather
+than users.
 
 #### database
 
@@ -184,10 +188,10 @@ taxon.
     #>   name: Poa annua
     #>   rank: species
     #>   id: 93036
-    #>   authority: none
+    #>   authority: Linnaeus
 
 Instead of the name, rank, and ID classes, simple character vectors can
-be supplied.
+be supplied. These will be converted to objects automatically.
 
     (x <- taxon(
       name = "Poa annua",
@@ -199,27 +203,33 @@ be supplied.
     #>   name: Poa annua
     #>   rank: species
     #>   id: 93036
-    #>   authority: none
+    #>   authority: Linnaeus
 
-The `taxa` class is just a list of `taxon` classes with some custom
-print methods. It is meant to store an arbitrary list of `taxon`.
+The `taxa` class is just a list of `taxon` classes. It is meant to store
+an arbitrary list of `taxon` objects.
 
-    (x <- taxon(
+    grass <- taxon(
       name = taxon_name("Poa annua"),
       rank = taxon_rank("species"),
       id = taxon_id(93036)
-    ))
-    #> <Taxon>
-    #>   name: Poa annua
-    #>   rank: species
-    #>   id: 93036
-    #>   authority: none
-    taxa(x, x, x)
+    )
+    mammalia <- taxon(
+      name = taxon_name("Mammalia"),
+      rank = taxon_rank("class"),
+      id = taxon_id(9681)
+    )
+    plantae <- taxon(
+      name = taxon_name("Plantae"),
+      rank = taxon_rank("kingdom"),
+      id = taxon_id(33090)
+    )
+
+    taxa(grass, mammalia, plantae)
     #> <taxa> 
     #>   no. taxa:  3 
     #>   Poa annua / species / 93036 
-    #>   Poa annua / species / 93036 
-    #>   Poa annua / species / 93036
+    #>   Mammalia / class / 9681 
+    #>   Plantae / kingdom / 33090
 
 ### The "hierarchy" class
 
@@ -290,7 +300,7 @@ similar to how multiple `taxon` are stored in `taxa`.
 The `taxonomy` class stores unique `taxon` objects in a tree structure.
 Usually this kind of complex information would be the output of a file
 parsing function, but the code below shows how to construct a `taxonomy`
-object from scratch.
+object from scratch (you would not normally do this).
 
     # define taxa
     notoryctidae <- taxon(name = "Notoryctidae", rank = "family", id = 4479)
@@ -331,8 +341,10 @@ corresponding entry in an [edge
 list](https://en.wikipedia.org/wiki/Adjacency_list) that encode how it
 is related to other taxa. This makes `taxonomy` more compact, but harder
 to manipulate using standard indexing. To make manipulation easier,
-there are methods for `taxomomy` that can provide indexes in a taxonomic
-context.
+there are functions like `filter_taxa` and `subtaxa` that will be
+covered later. In general, the `taxonomy` and `taxmap` objects (covered
+later) would be instantiated using a parser like `parse_tax_data`. This
+is covered in detail in the parsing vignette.
 
 #### supertaxa
 
@@ -420,26 +432,57 @@ What is returned can be modified with the `value` option:
 
 You can also subset based on a logical test:
 
-    supertaxa(tax, subset = taxon_ranks == "genus", value = "taxon_names")
+    supertaxa(tax, subset = taxon_ranks == "genus", value = "taxon_ranks")
     #> $g
-    #>          d          b 
-    #>  "Felidae" "Mammalia" 
+    #>        d        b 
+    #> "family"  "class" 
     #> 
     #> $h
-    #>          d          b 
-    #>  "Felidae" "Mammalia" 
+    #>        d        b 
+    #> "family"  "class" 
     #> 
     #> $i
-    #>           e           b 
-    #> "Hominidae"  "Mammalia" 
+    #>        e        b 
+    #> "family"  "class" 
     #> 
     #> $j
-    #>            f            c 
-    #> "Solanaceae"    "Plantae"
+    #>         f         c 
+    #>  "family" "kingdom"
 
 The `subset` and `value` work the same for most of the following
-functions as well. See `tax$all_names()` for what can be used with
-`value`.
+functions as well. See `all_names(tax)` for what can be used with
+`value` and `subset`. Note how `value` takes a character vector
+(`"taxon_ranks"`), but `subset` can use the same value (`taxon_ranks`)
+as a part of an expression. `taxon_ranks` is actually a function that is
+run automatically when its name is used this way:
+
+    taxon_ranks(tax)
+    #>         b         c         d         e         f         g         h 
+    #>   "class" "kingdom"  "family"  "family"  "family"   "genus"   "genus" 
+    #>         i         j         k         l         m         n         o 
+    #>   "genus"   "genus" "species" "species" "species" "species" "species"
+
+This is an example of [Non-standard
+evaluation](http://adv-r.had.co.nz/Computing-on-the-language.html)
+(NSE). NSE makes codes easier to read an write. The call to `supertaxa`
+could also have been written without NSE like so:
+
+    supertaxa(tax, subset = taxon_ranks(tax) == "genus", value = "taxon_ranks")
+    #> $g
+    #>        d        b 
+    #> "family"  "class" 
+    #> 
+    #> $h
+    #>        d        b 
+    #> "family"  "class" 
+    #> 
+    #> $i
+    #>        e        b 
+    #> "family"  "class" 
+    #> 
+    #> $j
+    #>         f         c 
+    #>  "family" "kingdom"
 
 #### subtaxa
 
@@ -501,6 +544,9 @@ object.
     #> 
     #> $o
     #> named character(0)
+
+This and the following functions behaves much like `supertaxa`, so we
+will not go into the same details here.
 
 #### roots
 
@@ -584,7 +630,8 @@ class, but with the following additions:
     taxa
 -   A list called `funcs` that stores user defined functions
 
-<!-- -->
+All the functions described above for the `taxonomy` class can be used
+with the `taxmap` class.
 
     info <- data.frame(name = c("tiger", "cat", "mole", "human", "tomato", "potato"),
                        n_legs = c(4, 4, 4, 2, 0, 0),
@@ -617,32 +664,34 @@ class, but with the following additions:
                         funcs = list(reaction = reaction))
 
 In most functions that work with taxmap objects, the names of
-list/vector datasets, table columns, or functions can be used as if they
-were separate variables on their own. In the case of functions, instead
-of returning the function itself, the results of the functions are
-returned. To see what variables can be used this way, use `all_names`.
+list/vector data sets, table columns, or functions can be used as if
+they were separate variables on their own (i.e. NSE). In the case of
+functions, instead of returning the function itself, the results of the
+functions are returned. To see what variables can be used this way, use
+`all_names`.
 
     all_names(my_taxmap)
     #>         taxon_names           taxon_ids       taxon_indexes 
     #>       "taxon_names"         "taxon_ids"     "taxon_indexes" 
     #>     classifications         n_supertaxa       n_supertaxa_1 
     #>   "classifications"       "n_supertaxa"     "n_supertaxa_1" 
-    #>           n_subtaxa         n_subtaxa_1         taxon_ranks 
-    #>         "n_subtaxa"       "n_subtaxa_1"       "taxon_ranks" 
-    #>             is_root             is_stem           is_branch 
-    #>           "is_root"           "is_stem"         "is_branch" 
-    #>             is_leaf        is_internode               n_obs 
-    #>           "is_leaf"      "is_internode"             "n_obs" 
-    #>             n_obs_1      data$info$name    data$info$n_legs 
-    #>           "n_obs_1"              "name"            "n_legs" 
-    #> data$info$dangerous   data$phylopic_ids          data$foods 
-    #>         "dangerous"      "phylopic_ids"             "foods" 
-    #>      funcs$reaction 
-    #>          "reaction"
+    #>           n_subtaxa         n_subtaxa_1            n_leaves 
+    #>         "n_subtaxa"       "n_subtaxa_1"          "n_leaves" 
+    #>          n_leaves_1         taxon_ranks             is_root 
+    #>        "n_leaves_1"       "taxon_ranks"           "is_root" 
+    #>             is_stem           is_branch             is_leaf 
+    #>           "is_stem"         "is_branch"           "is_leaf" 
+    #>        is_internode               n_obs             n_obs_1 
+    #>      "is_internode"             "n_obs"           "n_obs_1" 
+    #>      data$info$name    data$info$n_legs data$info$dangerous 
+    #>              "name"            "n_legs"         "dangerous" 
+    #>   data$phylopic_ids          data$foods      funcs$reaction 
+    #>      "phylopic_ids"             "foods"          "reaction"
 
 For example using `my_taxmap$data$info$n_legs` or `n_legs` will have the
 same effect inside manipulation functions like `filter_taxa` described
-below. To get the values of these variables, use `get_data`.
+below. This is similar to how `taxon_ranks` was used in `supertaxa` in a
+previous section. To get the values of these variables, use `get_data`.
 
     get_data(my_taxmap)
     #> $taxon_names
@@ -714,6 +763,14 @@ below. To get the values of these variables, use `get_data`.
     #> $n_subtaxa_1
     #> b c d e f g h i j k l m n o p q r 
     #> 3 1 2 1 1 1 1 1 1 1 2 0 0 0 0 0 0 
+    #> 
+    #> $n_leaves
+    #> b c d e f g h i j k l m n o p q r 
+    #> 4 2 2 1 1 2 1 1 1 1 2 0 0 0 0 0 0 
+    #> 
+    #> $n_leaves_1
+    #> b c d e f g h i j k l m n o p q r 
+    #> 0 0 0 0 0 0 1 1 1 1 2 0 0 0 0 0 0 
     #> 
     #> $taxon_ranks
     #>         b         c         d         e         f         g         h 
@@ -836,23 +893,24 @@ with a name starting with "t":
     #>   3 edges: NA->m, NA->o, NA->r
     #>   3 data sets:
     #>     info:
-    #>     # A tibble: 3 x 4
-    #>       name   n_legs dangerous taxon_id
-    #>       <fct>   <dbl> <lgl>     <chr>   
-    #>     1 tiger    4.00 T         m       
-    #>     2 mole     4.00 F         o       
-    #>     3 potato   0    F         r       
-    #>     phylopic_ids: a named character with 3 items
+    #>       # A tibble: 3 x 4
+    #>         taxon_id name   n_legs dangerous
+    #>         <chr>    <fct>   <dbl> <lgl>    
+    #>       1 m        tiger       4 TRUE     
+    #>       2 o        mole        4 FALSE    
+    #>       3 r        potato      0 FALSE    
+    #>     phylopic_ids: a named vector of 'character' with 3 items
     #>        m. e148eabb-f138-43[truncated] ... r. 63604565-0406-46[truncated]
-    #>     foods: a list with 3 items with names:
+    #>     foods: a list of 3 items named by taxa:
     #>        m, o, r
     #>   1 functions:
-    #>  reaction
+    #>     reaction
 
 There can be any number of filters that resolve to TRUE/FALSE vectors,
-taxon ids, or edge list indexes.
+taxon ids, or edge list indexes. For example, below is a combination of
+a TRUE/FALSE vectors and taxon id filter:
 
-    filter_taxa(my_taxmap, startsWith(taxon_names, "t"), "r")
+    filter_taxa(my_taxmap, startsWith(taxon_names, "t"), c("b", "r", "o"))
 
 There are many options for `filter_taxa` that make it very flexible. For
 example, the `supertaxa` option can make all the supertaxa of selected
@@ -860,23 +918,23 @@ taxa be preserved.
 
     filter_taxa(my_taxmap, startsWith(taxon_names, "t"), supertaxa = TRUE)
     #> <Taxmap>
-    #>   11 taxa: m. tigris, o. typhlops ... c. Plantae
-    #>   11 edges: h->m, j->o, l->r, d->h ... b->e, g->l, c->g, NA->c
+    #>   11 taxa: b. Mammalia, c. Plantae ... o. typhlops, r. tuberosum
+    #>   11 edges: NA->b, NA->c, b->d, b->e ... h->m, j->o, l->r
     #>   3 data sets:
     #>     info:
-    #>     # A tibble: 6 x 4
-    #>       name  n_legs dangerous taxon_id
-    #>       <fct>  <dbl> <lgl>     <chr>   
-    #>     1 tiger   4.00 T         m       
-    #>     2 cat     4.00 F         d       
-    #>     3 mole    4.00 F         o       
-    #>     # ... with 3 more rows
-    #>     phylopic_ids: a named character with 6 items
+    #>       # A tibble: 6 x 4
+    #>         taxon_id name  n_legs dangerous
+    #>         <chr>    <fct>  <dbl> <lgl>    
+    #>       1 m        tiger      4 TRUE     
+    #>       2 d        cat        4 FALSE    
+    #>       3 o        mole       4 FALSE    
+    #>       # … with 3 more rows
+    #>     phylopic_ids: a named vector of 'character' with 6 items
     #>        m. e148eabb-f138-43[truncated] ... r. 63604565-0406-46[truncated]
-    #>     foods: a list with 6 items with names:
+    #>     foods: a list of 6 items named by taxa:
     #>        m, d, o, b, l, r
     #>   1 functions:
-    #>  reaction
+    #>     reaction
 
 The `filter_obs` function works in a similar way, but subsets
 observations in `my_taxmap$data`.
@@ -887,17 +945,17 @@ observations in `my_taxmap$data`.
     #>   17 edges: NA->b, NA->c, b->d, b->e ... k->p, l->q, l->r
     #>   3 data sets:
     #>     info:
-    #>     # A tibble: 2 x 4
-    #>       name  n_legs dangerous taxon_id
-    #>       <fct>  <dbl> <lgl>     <chr>   
-    #>     1 tiger   4.00 T         m       
-    #>     2 human   2.00 T         p       
-    #>     phylopic_ids: a named character with 6 items
+    #>       # A tibble: 2 x 4
+    #>         taxon_id name  n_legs dangerous
+    #>         <chr>    <fct>  <dbl> <lgl>    
+    #>       1 m        tiger      4 TRUE     
+    #>       2 p        human      2 TRUE     
+    #>     phylopic_ids: a named vector of 'character' with 6 items
     #>        m. e148eabb-f138-43[truncated] ... r. 63604565-0406-46[truncated]
-    #>     foods: a list with 6 items with names:
+    #>     foods: a list of 6 items named by taxa:
     #>        m, n, o, p, q, r
     #>   1 functions:
-    #>  reaction
+    #>     reaction
 
 You can choose to filter out taxa whose observations did not pass the
 filter as well:
@@ -908,17 +966,21 @@ filter as well:
     #>   7 edges: NA->b, b->d, b->f, d->h, f->k, h->m, k->p
     #>   3 data sets:
     #>     info:
-    #>     # A tibble: 2 x 4
-    #>       name  n_legs dangerous taxon_id
-    #>       <fct>  <dbl> <lgl>     <chr>   
-    #>     1 tiger   4.00 T         m       
-    #>     2 human   2.00 T         p       
-    #>     phylopic_ids: a named character with 6 items
-    #>        m. e148eabb-f138-43[truncated] ... r. 63604565-0406-46[truncated]
-    #>     foods: a list with 6 items with names:
-    #>        m, n, o, p, q, r
+    #>       # A tibble: 2 x 4
+    #>         taxon_id name  n_legs dangerous
+    #>         <chr>    <fct>  <dbl> <lgl>    
+    #>       1 m        tiger      4 TRUE     
+    #>       2 p        human      2 TRUE     
+    #>     phylopic_ids: a named vector of 'character' with 2 items
+    #>        m. e148eabb-f138-43[truncated] ... p. 9fae30cd-fb59-4a[truncated]
+    #>     foods: a list of 2 items named by taxa:
+    #>        m, p
     #>   1 functions:
-    #>  reaction
+    #>     reaction
+
+Note how both the taxonomy and the associated data sets were filtered.
+The `drop_obs` option can be used to specify which non-target (i.e. not
+`"info"`) data sets are filtered when taxa are removed.
 
 #### Sampling
 
@@ -928,49 +990,49 @@ randomly. All of the options of the "filter\_" functions are available
 to the "sample\_" functions
 
     set.seed(1)
-    sample_n_taxa(my_taxmap, 3)
+    sample_n_taxa(my_taxmap, 3) # "3" here is a taxon index in the edge list
     #> <Taxmap>
     #>   3 taxa: g. Solanaceae, i. Felis, m. tigris
     #>   3 edges: NA->g, NA->i, NA->m
     #>   3 data sets:
     #>     info:
-    #>     # A tibble: 4 x 4
-    #>       name   n_legs dangerous taxon_id
-    #>       <fct>   <dbl> <lgl>     <chr>   
-    #>     1 tiger    4.00 T         m       
-    #>     2 cat      4.00 F         i       
-    #>     3 tomato   0    F         g       
-    #>     # ... with 1 more row
-    #>     phylopic_ids: a named character with 4 items
+    #>       # A tibble: 4 x 4
+    #>         taxon_id name   n_legs dangerous
+    #>         <chr>    <fct>   <dbl> <lgl>    
+    #>       1 m        tiger       4 TRUE     
+    #>       2 i        cat         4 FALSE    
+    #>       3 g        tomato      0 FALSE    
+    #>       # … with 1 more row
+    #>     phylopic_ids: a named vector of 'character' with 4 items
     #>        m. e148eabb-f138-43[truncated] ... g. 63604565-0406-46[truncated]
-    #>     foods: a list with 4 items with names:
+    #>     foods: a list of 4 items named by taxa:
     #>        m, i, g, g
     #>   1 functions:
-    #>  reaction
+    #>     reaction
     set.seed(1)
     sample_n_taxa(my_taxmap, 3, supertaxa = TRUE)
     #> <Taxmap>
-    #>   7 taxa: g. Solanaceae, i. Felis ... b. Mammalia, h. Panthera
-    #>   7 edges: c->g, d->i, h->m, NA->c, b->d, NA->b, d->h
+    #>   7 taxa: b. Mammalia, c. Plantae ... i. Felis, m. tigris
+    #>   7 edges: NA->b, NA->c, b->d, c->g, d->h, d->i, h->m
     #>   3 data sets:
     #>     info:
-    #>     # A tibble: 6 x 4
-    #>       name  n_legs dangerous taxon_id
-    #>       <fct>  <dbl> <lgl>     <chr>   
-    #>     1 tiger   4.00 T         m       
-    #>     2 cat     4.00 F         i       
-    #>     3 mole    4.00 F         b       
-    #>     # ... with 3 more rows
-    #>     phylopic_ids: a named character with 6 items
+    #>       # A tibble: 6 x 4
+    #>         taxon_id name  n_legs dangerous
+    #>         <chr>    <fct>  <dbl> <lgl>    
+    #>       1 m        tiger      4 TRUE     
+    #>       2 i        cat        4 FALSE    
+    #>       3 b        mole       4 FALSE    
+    #>       # … with 3 more rows
+    #>     phylopic_ids: a named vector of 'character' with 6 items
     #>        m. e148eabb-f138-43[truncated] ... g. 63604565-0406-46[truncated]
-    #>     foods: a list with 6 items with names:
+    #>     foods: a list of 6 items named by taxa:
     #>        m, i, b, b, g, g
     #>   1 functions:
-    #>  reaction
+    #>     reaction
 
 #### Adding columns
 
-Adding columns to tabular datasets is done using `mutate_obs`.
+Adding columns to tabular data sets is done using `mutate_obs`.
 
     mutate_obs(my_taxmap, "info",
                new_col = "Im new",
@@ -980,23 +1042,25 @@ Adding columns to tabular datasets is done using `mutate_obs`.
     #>   17 edges: NA->b, NA->c, b->d, b->e ... k->p, l->q, l->r
     #>   3 data sets:
     #>     info:
-    #>     # A tibble: 6 x 6
-    #>       name  n_legs dangerous taxon_id new_col newer_col
-    #>       <fct>  <dbl> <lgl>     <chr>    <chr>   <chr>    
-    #>     1 tiger   4.00 T         m        Im new  Im newer!
-    #>     2 cat     4.00 F         n        Im new  Im newer!
-    #>     3 mole    4.00 F         o        Im new  Im newer!
-    #>     # ... with 3 more rows
-    #>     phylopic_ids: a named character with 6 items
+    #>       # A tibble: 6 x 6
+    #>         taxon_id name  n_legs dangerous new_col newer_col
+    #>         <chr>    <fct>  <dbl> <lgl>     <chr>   <chr>    
+    #>       1 m        tiger      4 TRUE      Im new  Im newer!
+    #>       2 n        cat        4 FALSE     Im new  Im newer!
+    #>       3 o        mole       4 FALSE     Im new  Im newer!
+    #>       # … with 3 more rows
+    #>     phylopic_ids: a named vector of 'character' with 6 items
     #>        m. e148eabb-f138-43[truncated] ... r. 63604565-0406-46[truncated]
-    #>     foods: a list with 6 items with names:
+    #>     foods: a list of 6 items named by taxa:
     #>        m, n, o, p, q, r
     #>   1 functions:
-    #>  reaction
+    #>     reaction
+
+Note how you can use newly created columns in the same call.
 
 #### Subsetting columns
 
-Subsetting columns in tabular datasets is done using `select_obs`.
+Subsetting columns in tabular data sets is done using `select_obs`.
 
     # Selecting a column by name
     select_obs(my_taxmap, "info", dangerous)
@@ -1005,19 +1069,19 @@ Subsetting columns in tabular datasets is done using `select_obs`.
     #>   17 edges: NA->b, NA->c, b->d, b->e ... k->p, l->q, l->r
     #>   3 data sets:
     #>     info:
-    #>     # A tibble: 6 x 2
-    #>       taxon_id dangerous
-    #>       <chr>    <lgl>    
-    #>     1 m        T        
-    #>     2 n        F        
-    #>     3 o        F        
-    #>     # ... with 3 more rows
-    #>     phylopic_ids: a named character with 6 items
+    #>       # A tibble: 6 x 2
+    #>         taxon_id dangerous
+    #>         <chr>    <lgl>    
+    #>       1 m        TRUE     
+    #>       2 n        FALSE    
+    #>       3 o        FALSE    
+    #>       # … with 3 more rows
+    #>     phylopic_ids: a named vector of 'character' with 6 items
     #>        m. e148eabb-f138-43[truncated] ... r. 63604565-0406-46[truncated]
-    #>     foods: a list with 6 items with names:
+    #>     foods: a list of 6 items named by taxa:
     #>        m, n, o, p, q, r
     #>   1 functions:
-    #>  reaction
+    #>     reaction
 
     # Selecting a column by index
     select_obs(my_taxmap, "info", 3)
@@ -1026,40 +1090,40 @@ Subsetting columns in tabular datasets is done using `select_obs`.
     #>   17 edges: NA->b, NA->c, b->d, b->e ... k->p, l->q, l->r
     #>   3 data sets:
     #>     info:
-    #>     # A tibble: 6 x 2
-    #>       taxon_id dangerous
-    #>       <chr>    <lgl>    
-    #>     1 m        T        
-    #>     2 n        F        
-    #>     3 o        F        
-    #>     # ... with 3 more rows
-    #>     phylopic_ids: a named character with 6 items
+    #>       # A tibble: 6 x 2
+    #>         taxon_id n_legs
+    #>         <chr>     <dbl>
+    #>       1 m             4
+    #>       2 n             4
+    #>       3 o             4
+    #>       # … with 3 more rows
+    #>     phylopic_ids: a named vector of 'character' with 6 items
     #>        m. e148eabb-f138-43[truncated] ... r. 63604565-0406-46[truncated]
-    #>     foods: a list with 6 items with names:
+    #>     foods: a list of 6 items named by taxa:
     #>        m, n, o, p, q, r
     #>   1 functions:
-    #>  reaction
+    #>     reaction
 
-    # Selecting a column by regular expressions
+    # Selecting a column by regular expressions (i.e. TRUE/FALSE)
     select_obs(my_taxmap, "info", matches("^dange"))
     #> <Taxmap>
     #>   17 taxa: b. Mammalia, c. Plantae ... r. tuberosum
     #>   17 edges: NA->b, NA->c, b->d, b->e ... k->p, l->q, l->r
     #>   3 data sets:
     #>     info:
-    #>     # A tibble: 6 x 2
-    #>       taxon_id dangerous
-    #>       <chr>    <lgl>    
-    #>     1 m        T        
-    #>     2 n        F        
-    #>     3 o        F        
-    #>     # ... with 3 more rows
-    #>     phylopic_ids: a named character with 6 items
+    #>       # A tibble: 6 x 2
+    #>         taxon_id dangerous
+    #>         <chr>    <lgl>    
+    #>       1 m        TRUE     
+    #>       2 n        FALSE    
+    #>       3 o        FALSE    
+    #>       # … with 3 more rows
+    #>     phylopic_ids: a named vector of 'character' with 6 items
     #>        m. e148eabb-f138-43[truncated] ... r. 63604565-0406-46[truncated]
-    #>     foods: a list with 6 items with names:
+    #>     foods: a list of 6 items named by taxa:
     #>        m, n, o, p, q, r
     #>   1 functions:
-    #>  reaction
+    #>     reaction
 
 #### Sorting
 
@@ -1072,38 +1136,38 @@ Sorting the edge list and observations is done using `arrage_taxa` and
     #>   17 edges: i->n, b->d, d->i, b->f ... g->l, h->m, l->r, j->o
     #>   3 data sets:
     #>     info:
-    #>     # A tibble: 6 x 4
-    #>       name  n_legs dangerous taxon_id
-    #>       <fct>  <dbl> <lgl>     <chr>   
-    #>     1 tiger   4.00 T         m       
-    #>     2 cat     4.00 F         n       
-    #>     3 mole    4.00 F         o       
-    #>     # ... with 3 more rows
-    #>     phylopic_ids: a named character with 6 items
+    #>       # A tibble: 6 x 4
+    #>         taxon_id name  n_legs dangerous
+    #>         <chr>    <fct>  <dbl> <lgl>    
+    #>       1 m        tiger      4 TRUE     
+    #>       2 n        cat        4 FALSE    
+    #>       3 o        mole       4 FALSE    
+    #>       # … with 3 more rows
+    #>     phylopic_ids: a named vector of 'character' with 6 items
     #>        m. e148eabb-f138-43[truncated] ... r. 63604565-0406-46[truncated]
-    #>     foods: a list with 6 items with names:
+    #>     foods: a list of 6 items named by taxa:
     #>        m, n, o, p, q, r
     #>   1 functions:
-    #>  reaction
+    #>     reaction
     arrange_obs(my_taxmap, "info", name)
     #> <Taxmap>
     #>   17 taxa: b. Mammalia, c. Plantae ... r. tuberosum
     #>   17 edges: NA->b, NA->c, b->d, b->e ... k->p, l->q, l->r
     #>   3 data sets:
     #>     info:
-    #>     # A tibble: 6 x 4
-    #>       name  n_legs dangerous taxon_id
-    #>       <fct>  <dbl> <lgl>     <chr>   
-    #>     1 cat     4.00 F         n       
-    #>     2 human   2.00 T         p       
-    #>     3 mole    4.00 F         o       
-    #>     # ... with 3 more rows
-    #>     phylopic_ids: a named character with 6 items
+    #>       # A tibble: 6 x 4
+    #>         taxon_id name  n_legs dangerous
+    #>         <chr>    <fct>  <dbl> <lgl>    
+    #>       1 n        cat        4 FALSE    
+    #>       2 p        human      2 TRUE     
+    #>       3 o        mole       4 FALSE    
+    #>       # … with 3 more rows
+    #>     phylopic_ids: a named vector of 'character' with 6 items
     #>        m. e148eabb-f138-43[truncated] ... r. 63604565-0406-46[truncated]
-    #>     foods: a list with 6 items with names:
+    #>     foods: a list of 6 items named by taxa:
     #>        m, n, o, p, q, r
     #>   1 functions:
-    #>  reaction
+    #>     reaction
 
 #### Parsing data
 
@@ -1119,10 +1183,11 @@ types of data in different formats.
 
 The `parse_tax_data` and `lookup_tax_data` have, in addition to the
 functionality above, the ability to include additional data sets that
-are somehow associated with the source datasets (e.g. share a common
-identifier). Elements in these datasets will be assigned the taxa
+are somehow associated with the source data sets (e.g. share a common
+identifier). Elements in these data sets will be assigned the taxa
 defined in the source data, so functions like `filter_taxa` and
-`filter_obs` will work on all of the dataset at once.
+`filter_obs` will work on all of the data set at once. See the parsing
+vignette for more information.
 
 Parsing Hierarchy and hierarchies objects
 -----------------------------------------
@@ -1259,9 +1324,9 @@ operators
 For more information
 --------------------
 
-This vignettte is meant to be just an outline of what `taxa` can do. In
+This vignette is meant to be just an outline of what `taxa` can do. In
 the future, we plan to release additional, in-depth vignettes for
-specific topics. More informaiton for specific functions and examples
+specific topics. More information for specific functions and examples
 can be found on their man pages by typing the name of the function
 prefixed by a `?` in an R session. For example, `?filter_taxa` will pull
 up the help page for `filter_taxa`.
