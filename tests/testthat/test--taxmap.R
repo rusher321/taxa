@@ -395,8 +395,8 @@ test_that("Mapping between table observations and the edge list works", {
 })
 
 test_that("Returning values for observations", {
-  expect_true(all(c("tigris", "catus", "typhlops", "sapiens") %in%
-                    obs(test_obj, "info", subset = "b", value = "taxon_names", simplify = T)))
+  expect_true(all(c(4, 4, 4, 2) %in%
+                    obs(test_obj, "info", subset = "b", value = "n_legs", simplify = T)))
 })
 
 test_that("Mapping between a subset of observations and the edge list works", {
