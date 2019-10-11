@@ -203,7 +203,7 @@ Taxmap <- R6::R6Class(
                                    recursive = recursive,
                                    include_input = TRUE,
                                    value = "taxon_indexes")
-        #unname is neede for some reason.. something to look into...
+        #unname is needed for some reason.. something to look into...
       } else {
         my_subtaxa <- subset
       }
@@ -219,11 +219,16 @@ Taxmap <- R6::R6Class(
       # Look up values
       if (!is.null(value)) {
         possible_values <- self$get_data(value)[[1]]
-        if (is.null(names(possible_values))) {
-          output <- lapply(output, function(i) possible_values[i])
-        } else {
-          output <- lapply(output, function(i) possible_values[self$get_data_taxon_ids(data)[i]])
+        if (length(possible_values) != length(obs_taxon_ids)) {
+          stop(call. = FALSE,
+               'The value "', value, '" is not the same length as the data set "', data, '".')
         }
+        if (! is.null(names(possible_values)) && any(names(possible_values) != names(obs_taxon_ids))) {
+          stop(call. = FALSE,
+               'The value "', value, '" is in a different order than the data set "', data,
+               '" according to taxon IDs.')
+        }
+        output <- lapply(output, function(i) possible_values[i])
       }
 
       # Reduce dimensionality

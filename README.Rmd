@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 [![cran version](http://www.r-pkg.org/badges/version/taxa)](https://cran.r-project.org/package=taxa)
 
 
-```{r child = 'vignettes/taxa-vignette.Rmd'}
+```{r child = 'vignettes/taxa-introduction.Rmd'}
 ```
 
 
