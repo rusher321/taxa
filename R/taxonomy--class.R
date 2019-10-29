@@ -247,9 +247,9 @@ Taxonomy <- R6::R6Class(
       #   This only applies to taxmap objects
       output[] <- lapply(seq_len(length(output)), function(index) {
         data_location <- names(name[index])
-        if (startsWith(data_location, "data$")) {
+        if (startsWith(data_location, "data[['")) {
           data_name <- strsplit(data_location,
-                                split =  "$", fixed = TRUE)[[1]][2]
+                                split =  "'", fixed = TRUE)[[1]][2]
           return(stats::setNames(output[[index]],
                                  self$get_data_taxon_ids(data_name)))
         } else {

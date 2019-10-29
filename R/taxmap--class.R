@@ -135,10 +135,11 @@ Taxmap <- R6::R6Class(
       is_table <- vapply(self$data, is.data.frame, logical(1))
       if (tables && length(self$data[is_table]) > 0) {
         table_col_names <- unlist(lapply(self$data[is_table], colnames))
-        names(table_col_names) <- paste0("data$",
+        names(table_col_names) <- paste0("data[['",
                                          rep(names(self$data[is_table]),
                                              vapply(self$data[is_table],
-                                                    ncol, integer(1))))
+                                                    ncol, integer(1))),
+                                         "']]")
         table_col_names <- table_col_names[table_col_names != "taxon_id"]
         output <- c(output, table_col_names)
       }
@@ -171,7 +172,9 @@ Taxmap <- R6::R6Class(
 
       # Add the name to the name of the name and return
       names(output) <- paste0(names(output),
-                              ifelse(names(output) == "", "", "$"), output)
+                              ifelse(names(output) == "", "", "[['"),
+                              output,
+                              ifelse(names(output) == "", "", "']]"))
       return(output)
     },
 
