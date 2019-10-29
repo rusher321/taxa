@@ -1111,7 +1111,7 @@ extract_tax_data <- function(tax_data, key, regex, class_key = "taxon_name",
                              include_match = include_match,
                              include_tax_data = include_tax_data)
     if (!include_match) {
-      output$data$tax_data$match <- NULL
+      output$data$tax_data[which(key == "class") + 1] <- NULL
     }
   }
 

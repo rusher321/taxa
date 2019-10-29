@@ -231,11 +231,11 @@ test_that("Taxmap can be intialized from queried data", {
                          species_id = c("A", "B", "C"))
   expect_warning(result <- lookup_tax_data(raw_data, type = "taxon_name", column = "species"))
   expect_warning(result <- lookup_tax_data(raw_data, type = "taxon_name", column = "species"), ask = FALSE)
-  expect_equal(result$data$query_data$taxon_id[2], "unknown")
+  expect_equal(unname(result$data$query_data$taxon_id[2]), "unknown")
   expect_warning(result <- lookup_tax_data(raw_data, type = "taxon_id", column = "my_tax_id"))
-  expect_equal(result$data$query_data$taxon_id[2], "unknown")
+  expect_equal(unname(result$data$query_data$taxon_id[2]), "unknown")
   expect_warning(result <- lookup_tax_data(raw_data, type = "seq_id", column = "my_seq"))
-  expect_equal(result$data$query_data$taxon_id[2], "unknown")
+  expect_equal(unname(result$data$query_data$taxon_id[2]), "unknown")
 
   # Zero-length inputs produce empty taxmap objects
   expect_equal(taxon_names(lookup_tax_data(c())),          character(0))
