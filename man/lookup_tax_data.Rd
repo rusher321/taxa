@@ -4,9 +4,17 @@
 \alias{lookup_tax_data}
 \title{Convert one or more data sets to taxmap}
 \usage{
-lookup_tax_data(tax_data, type, column = 1, datasets = list(),
-  mappings = c(), database = "ncbi", include_tax_data = TRUE,
-  use_database_ids = TRUE, ask = TRUE)
+lookup_tax_data(
+  tax_data,
+  type,
+  column = 1,
+  datasets = list(),
+  mappings = c(),
+  database = "ncbi",
+  include_tax_data = TRUE,
+  use_database_ids = TRUE,
+  ask = TRUE
+)
 }
 \arguments{
 \item{tax_data}{A table, list, or vector that contain sequence IDs, taxon
@@ -174,8 +182,9 @@ taxon.
 }
 }
 \seealso{
-Other parsers: \code{\link{extract_tax_data}},
-  \code{\link{parse_edge_list}},
-  \code{\link{parse_tax_data}}
+Other parsers: 
+\code{\link{extract_tax_data}()},
+\code{\link{parse_edge_list}()},
+\code{\link{parse_tax_data}()}
 }
 \concept{parsers}

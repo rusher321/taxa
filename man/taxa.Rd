@@ -39,10 +39,15 @@ taxa(x, x, x)
 taxa(a, x, a)
 }
 \seealso{
-Other classes: \code{\link{hierarchies}},
-  \code{\link{hierarchy}}, \code{\link{taxmap}},
-  \code{\link{taxon_database}}, \code{\link{taxon_id}},
-  \code{\link{taxon_name}}, \code{\link{taxon_rank}},
-  \code{\link{taxonomy}}, \code{\link{taxon}}
+Other classes: 
+\code{\link{hierarchies}()},
+\code{\link{hierarchy}()},
+\code{\link{taxmap}()},
+\code{\link{taxon_database}()},
+\code{\link{taxon_id}()},
+\code{\link{taxon_name}()},
+\code{\link{taxon_rank}()},
+\code{\link{taxonomy}()},
+\code{\link{taxon}()}
 }
 \concept{classes}

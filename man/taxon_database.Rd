@@ -4,8 +4,7 @@
 \alias{taxon_database}
 \title{Taxonomy database class}
 \usage{
-taxon_database(name = NULL, url = NULL, description = NULL,
-  id_regex = NULL)
+taxon_database(name = NULL, url = NULL, description = NULL, id_regex = NULL)
 }
 \arguments{
 \item{name}{(character) name of the database}
@@ -41,10 +40,15 @@ database_list$ncbi
 \seealso{
 \link{database_list}
 
-Other classes: \code{\link{hierarchies}},
-  \code{\link{hierarchy}}, \code{\link{taxa}},
-  \code{\link{taxmap}}, \code{\link{taxon_id}},
-  \code{\link{taxon_name}}, \code{\link{taxon_rank}},
-  \code{\link{taxonomy}}, \code{\link{taxon}}
+Other classes: 
+\code{\link{hierarchies}()},
+\code{\link{hierarchy}()},
+\code{\link{taxa}()},
+\code{\link{taxmap}()},
+\code{\link{taxon_id}()},
+\code{\link{taxon_name}()},
+\code{\link{taxon_rank}()},
+\code{\link{taxonomy}()},
+\code{\link{taxon}()}
 }
 \concept{classes}

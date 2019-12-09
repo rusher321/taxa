@@ -13,9 +13,11 @@ tid_font(text)
 A simple wrapper to make changing the formatting of text printed easier.
 }
 \seealso{
-Other printer fonts: \code{\link{desc_font}},
-  \code{\link{error_font}}, \code{\link{name_font}},
-  \code{\link{punc_font}}
+Other printer fonts: 
+\code{\link{desc_font}()},
+\code{\link{error_font}()},
+\code{\link{name_font}()},
+\code{\link{punc_font}()}
 }
 \concept{printer fonts}
 \keyword{internal}

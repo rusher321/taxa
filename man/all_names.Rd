@@ -46,7 +46,9 @@ all_names(ex_taxmap, builtin_funcs = FALSE)
 
 }
 \seealso{
-Other NSE helpers: \code{\link{data_used}},
-  \code{\link{get_data}}, \code{\link{names_used}}
+Other NSE helpers: 
+\code{\link{data_used}},
+\code{\link{get_data}()},
+\code{\link{names_used}}
 }
 \concept{NSE helpers}

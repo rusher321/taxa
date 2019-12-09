@@ -27,15 +27,18 @@ Which print method is called is determined by its name, so changing the name
 of this function will change when it is called.
 }
 \seealso{
-Other taxmap print methods: \code{\link{print__character}},
-  \code{\link{print__data.frame}},
-  \code{\link{print__default_}},
-  \code{\link{print__factor}},
-  \code{\link{print__integer}}, \code{\link{print__list}},
-  \code{\link{print__matrix}},
-  \code{\link{print__numeric}},
-  \code{\link{print__ordered}},
-  \code{\link{print__tbl_df}}, \code{\link{print__vector}}
+Other taxmap print methods: 
+\code{\link{print__character}()},
+\code{\link{print__data.frame}()},
+\code{\link{print__default_}()},
+\code{\link{print__factor}()},
+\code{\link{print__integer}()},
+\code{\link{print__list}()},
+\code{\link{print__matrix}()},
+\code{\link{print__numeric}()},
+\code{\link{print__ordered}()},
+\code{\link{print__tbl_df}()},
+\code{\link{print__vector}()}
 }
 \concept{taxmap print methods}
 \keyword{internal}

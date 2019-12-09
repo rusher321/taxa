@@ -4,8 +4,7 @@
 \alias{parse_edge_list}
 \title{Convert a table with an edge list to taxmap}
 \usage{
-parse_edge_list(input, taxon_id, supertaxon_id, taxon_name,
-  taxon_rank = NULL)
+parse_edge_list(input, taxon_id, supertaxon_id, taxon_name, taxon_rank = NULL)
 }
 \arguments{
 \item{input}{A table containing an edge list encoded by two columns.}
@@ -25,8 +24,9 @@ The contents of the edge list will be used as taxon IDs.
 The whole table will be included as a data set in the output object.
 }
 \seealso{
-Other parsers: \code{\link{extract_tax_data}},
-  \code{\link{lookup_tax_data}},
-  \code{\link{parse_tax_data}}
+Other parsers: 
+\code{\link{extract_tax_data}()},
+\code{\link{lookup_tax_data}()},
+\code{\link{parse_tax_data}()}
 }
 \concept{parsers}

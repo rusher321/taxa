@@ -36,12 +36,16 @@ transmute_obs(ex_taxmap, "info", new_col = paste0(name, "!!!"))
 
 }
 \seealso{
-Other taxmap manipulation functions: \code{\link{arrange_obs}},
-  \code{\link{arrange_taxa}}, \code{\link{filter_obs}},
-  \code{\link{filter_taxa}}, \code{\link{mutate_obs}},
-  \code{\link{sample_frac_obs}},
-  \code{\link{sample_frac_taxa}},
-  \code{\link{sample_n_obs}}, \code{\link{sample_n_taxa}},
-  \code{\link{select_obs}}
+Other taxmap manipulation functions: 
+\code{\link{arrange_obs}()},
+\code{\link{arrange_taxa}()},
+\code{\link{filter_obs}()},
+\code{\link{filter_taxa}()},
+\code{\link{mutate_obs}()},
+\code{\link{sample_frac_obs}()},
+\code{\link{sample_frac_taxa}()},
+\code{\link{sample_n_obs}()},
+\code{\link{sample_n_taxa}()},
+\code{\link{select_obs}()}
 }
 \concept{taxmap manipulation functions}

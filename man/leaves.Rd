@@ -55,9 +55,12 @@ leaves(ex_taxmap, value = "taxon_names", recursive = FALSE)
 
 }
 \seealso{
-Other taxonomy indexing functions: \code{\link{branches}},
-  \code{\link{internodes}}, \code{\link{roots}},
-  \code{\link{stems}}, \code{\link{subtaxa}},
-  \code{\link{supertaxa}}
+Other taxonomy indexing functions: 
+\code{\link{branches}()},
+\code{\link{internodes}()},
+\code{\link{roots}()},
+\code{\link{stems}()},
+\code{\link{subtaxa}()},
+\code{\link{supertaxa}()}
 }
 \concept{taxonomy indexing functions}

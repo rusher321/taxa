@@ -22,15 +22,24 @@ filter_taxa(ex_taxmap, ! taxon_ids \%in\% c("c", "d"))
 
 }
 \seealso{
-Other taxonomy data functions: \code{\link{classifications}},
-  \code{\link{id_classifications}},
-  \code{\link{is_branch}}, \code{\link{is_internode}},
-  \code{\link{is_leaf}}, \code{\link{is_root}},
-  \code{\link{is_stem}}, \code{\link{map_data_}},
-  \code{\link{map_data}}, \code{\link{n_leaves_1}},
-  \code{\link{n_leaves}}, \code{\link{n_subtaxa_1}},
-  \code{\link{n_subtaxa}}, \code{\link{n_supertaxa_1}},
-  \code{\link{n_supertaxa}}, \code{\link{taxon_indexes}},
-  \code{\link{taxon_names}}, \code{\link{taxon_ranks}}
+Other taxonomy data functions: 
+\code{\link{classifications}()},
+\code{\link{id_classifications}()},
+\code{\link{is_branch}()},
+\code{\link{is_internode}()},
+\code{\link{is_leaf}()},
+\code{\link{is_root}()},
+\code{\link{is_stem}()},
+\code{\link{map_data_}()},
+\code{\link{map_data}()},
+\code{\link{n_leaves_1}()},
+\code{\link{n_leaves}()},
+\code{\link{n_subtaxa_1}()},
+\code{\link{n_subtaxa}()},
+\code{\link{n_supertaxa_1}()},
+\code{\link{n_supertaxa}()},
+\code{\link{taxon_indexes}()},
+\code{\link{taxon_names}()},
+\code{\link{taxon_ranks}()}
 }
 \concept{taxonomy data functions}

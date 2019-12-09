@@ -818,7 +818,7 @@ lookup_tax_data <- function(tax_data, type, column = 1, datasets = list(),
   classifications <- lookup_funcs[[type]](query)
   class_strings <- unlist(lapply(classifications, function(x) {
     lapply(seq_len(nrow(x)), function(i) {
-      paste(as.character(unlist(x[1:i, 1])), collapse = internal_class_sep)
+      paste0(as.character(unlist(x[1:i, 1])), "___", as.character(unlist(x[1:i, 2])), collapse = internal_class_sep)
     })
   }))
   combined_class <- do.call(rbind, unname(classifications))
@@ -850,8 +850,11 @@ lookup_tax_data <- function(tax_data, type, column = 1, datasets = list(),
                            datasets = datasets,
                            class_cols = 1,
                            class_sep = internal_class_sep,
+                           class_key = c('taxon_name', 'taxon_rank'),
+                           class_regex = '^(.+)___(.+)$',
                            mappings = mappings,
                            include_tax_data = include_tax_data)
+  output$data$class_data <- NULL
 
   if (include_tax_data) {
     # Remove mapping columns from output

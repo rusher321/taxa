@@ -4,8 +4,7 @@
 \alias{parse_dataset}
 \title{Parse options specifying datasets}
 \usage{
-parse_dataset(obj, data, must_be_valid = TRUE, needed = TRUE,
-  rm_na = TRUE)
+parse_dataset(obj, data, must_be_valid = TRUE, needed = TRUE, rm_na = TRUE)
 }
 \arguments{
 \item{obj}{The taxmap object.}

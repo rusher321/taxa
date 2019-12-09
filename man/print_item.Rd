@@ -4,8 +4,15 @@
 \alias{print_item}
 \title{Print a item}
 \usage{
-print_item(obj, data, name = NULL, max_rows = 3, max_items = 3,
-  max_width = getOption("width") - 10, prefix = "")
+print_item(
+  obj,
+  data,
+  name = NULL,
+  max_rows = 3,
+  max_items = 3,
+  max_width = getOption("width") - 10,
+  prefix = ""
+)
 }
 \arguments{
 \item{obj}{The taxmap object containing the thing to print}

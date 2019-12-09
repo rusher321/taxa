@@ -4,8 +4,7 @@
 \alias{taxmap}
 \title{Taxmap class}
 \usage{
-taxmap(..., .list = NULL, data = NULL, funcs = list(),
-  named_by_rank = FALSE)
+taxmap(..., .list = NULL, data = NULL, funcs = list(), named_by_rank = FALSE)
 }
 \arguments{
 \item{...}{Any number of object of class \code{\link[=hierarchy]{hierarchy()}} or character
@@ -189,10 +188,15 @@ ex_taxmap <- taxmap(tiger, cat, mole, human, tomato, potato,
                     funcs = list(reaction = reaction))
 }
 \seealso{
-Other classes: \code{\link{hierarchies}},
-  \code{\link{hierarchy}}, \code{\link{taxa}},
-  \code{\link{taxon_database}}, \code{\link{taxon_id}},
-  \code{\link{taxon_name}}, \code{\link{taxon_rank}},
-  \code{\link{taxonomy}}, \code{\link{taxon}}
+Other classes: 
+\code{\link{hierarchies}()},
+\code{\link{hierarchy}()},
+\code{\link{taxa}()},
+\code{\link{taxon_database}()},
+\code{\link{taxon_id}()},
+\code{\link{taxon_name}()},
+\code{\link{taxon_rank}()},
+\code{\link{taxonomy}()},
+\code{\link{taxon}()}
 }
 \concept{classes}

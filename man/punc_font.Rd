@@ -14,9 +14,11 @@ A simple wrapper to make changing the formatting of text printed easier.
 This is used for non-data, formatting characters
 }
 \seealso{
-Other printer fonts: \code{\link{desc_font}},
-  \code{\link{error_font}}, \code{\link{name_font}},
-  \code{\link{tid_font}}
+Other printer fonts: 
+\code{\link{desc_font}()},
+\code{\link{error_font}()},
+\code{\link{name_font}()},
+\code{\link{tid_font}()}
 }
 \concept{printer fonts}
 \keyword{internal}

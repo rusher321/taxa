@@ -64,11 +64,16 @@ sample_frac_taxa(ex_taxmap, 0.5, supertaxa = TRUE)
 
 }
 \seealso{
-Other taxmap manipulation functions: \code{\link{arrange_obs}},
-  \code{\link{arrange_taxa}}, \code{\link{filter_obs}},
-  \code{\link{filter_taxa}}, \code{\link{mutate_obs}},
-  \code{\link{sample_frac_obs}},
-  \code{\link{sample_n_obs}}, \code{\link{sample_n_taxa}},
-  \code{\link{select_obs}}, \code{\link{transmute_obs}}
+Other taxmap manipulation functions: 
+\code{\link{arrange_obs}()},
+\code{\link{arrange_taxa}()},
+\code{\link{filter_obs}()},
+\code{\link{filter_taxa}()},
+\code{\link{mutate_obs}()},
+\code{\link{sample_frac_obs}()},
+\code{\link{sample_n_obs}()},
+\code{\link{sample_n_taxa}()},
+\code{\link{select_obs}()},
+\code{\link{transmute_obs}()}
 }
 \concept{taxmap manipulation functions}

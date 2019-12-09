@@ -4,10 +4,19 @@
 \alias{extract_tax_data}
 \title{Extracts taxonomy info from vectors with regex}
 \usage{
-extract_tax_data(tax_data, key, regex, class_key = "taxon_name",
-  class_regex = "(.*)", class_sep = NULL, sep_is_regex = FALSE,
-  class_rev = FALSE, database = "ncbi", include_match = FALSE,
-  include_tax_data = TRUE)
+extract_tax_data(
+  tax_data,
+  key,
+  regex,
+  class_key = "taxon_name",
+  class_regex = "(.*)",
+  class_sep = NULL,
+  sep_is_regex = FALSE,
+  class_rev = FALSE,
+  database = "ncbi",
+  include_match = FALSE,
+  include_tax_data = TRUE
+)
 }
 \arguments{
 \item{tax_data}{A vector from which to extract taxonomy information.}
@@ -148,8 +157,9 @@ taxon.
 }
 }
 \seealso{
-Other parsers: \code{\link{lookup_tax_data}},
-  \code{\link{parse_edge_list}},
-  \code{\link{parse_tax_data}}
+Other parsers: 
+\code{\link{lookup_tax_data}()},
+\code{\link{parse_edge_list}()},
+\code{\link{parse_tax_data}()}
 }
 \concept{parsers}

@@ -197,7 +197,7 @@ Taxonomy <- R6::R6Class(
         names_used <- unlist(lapply(1:length(expressions),
                                     function(i) decompose(expressions[[i]])))
         my_names <- self$all_names()
-        return(my_names[my_names %in% names_used])
+        return(my_names[my_names %in% names_used & my_names == make.names(my_names)])
       }
     },
 

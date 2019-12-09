@@ -44,9 +44,12 @@ branches(ex_taxmap, value = "taxon_names")
 
 }
 \seealso{
-Other taxonomy indexing functions: \code{\link{internodes}},
-  \code{\link{leaves}}, \code{\link{roots}},
-  \code{\link{stems}}, \code{\link{subtaxa}},
-  \code{\link{supertaxa}}
+Other taxonomy indexing functions: 
+\code{\link{internodes}()},
+\code{\link{leaves}()},
+\code{\link{roots}()},
+\code{\link{stems}()},
+\code{\link{subtaxa}()},
+\code{\link{supertaxa}()}
 }
 \concept{taxonomy indexing functions}
